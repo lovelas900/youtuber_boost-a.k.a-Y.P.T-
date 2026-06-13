@@ -1,0 +1,128 @@
+name: ✅ Validate Files
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🔍 Check BAT syntax
+        run: |
+          echo "🔍 Проверка BAT файлов..."
+          for file in *.bat; do
+            if [ -f "$file" ]; then
+              echo "Проверяю: $file"
+              
+              # Проверка наличия @echo off
+              grep -q "@echo off" "$file" && echo "  ✅ @echo off" || echo "  ⚠️ Нет @echo off"
+              
+              # Проверка закрывающих скобок
+              open_parens=$(grep -o "(" "$file" | wc -l)
+              close_parens=$(grep -o ")" "$file" | wc -l)
+              if [ "$open_parens" -eq "$close_parens" ]; then
+                echo "  ✅ Скобки сбалансированы ($open_parens пар)"
+              else
+                echo "  ⚠️ Дисбаланс скобок! Открыто: $open_parens, Закрыто: $close_parens"
+              fi
+              
+              # Проверка наличия :EXIT
+              grep -q ":EXIT" "$file" && echo "  ✅ Метка :EXIT" || echo "  ⚠️ Нет :EXIT"
+              
+              # Проверка наличия goto MENU
+              grep -q "goto MENU" "$file" && echo "  ✅ goto MENU" || echo "  ⚠️ Нет goto MENU"
+              
+              # Проверка на пустые строки с пробелами
+              grep -q "^[[:space:]]\+$" "$file" && echo "  ⚠️ Есть строки с пробелами" || echo "  ✅ Нет пустых строк с пробелами"
+              
+              echo ""
+            fi
+          done
+
+      - name: 🔍 Check HTML syntax
+        run: |
+          echo "🔍 Проверка HTML файлов..."
+          for file in *.html; do
+            if [ -f "$file" ]; then
+              echo "Проверяю: $file"
+              
+              # Проверка DOCTYPE
+              grep -q "<!DOCTYPE html>" "$file" && echo "  ✅ DOCTYPE" || echo "  ❌ Нет DOCTYPE"
+              
+              # Проверка закрывающих тегов
+              html_open=$(grep -o "<html" "$file" | wc -l)
+              html_close=$(grep -o "</html>" "$file" | wc -l)
+              if [ "$html_open" -le "$html_close" ]; then
+                echo "  ✅ Тег html сбалансирован"
+              else
+                echo "  ⚠️ Дисбаланс html тегов"
+              fi
+              
+              # Проверка viewport
+              grep -q "viewport" "$file" && echo "  ✅ Viewport" || echo "  ⚠️ Нет viewport"
+              
+              # Проверка charset
+              grep -q "charset" "$file" && echo "  ✅ Charset" || echo "  ⚠️ Нет charset"
+              
+              # Проверка размера
+              size=$(wc -c < "$file")
+              if [ "$size" -lt 1048576 ]; then
+                echo "  ✅ Размер: $size байт (< 1MB)"
+              else
+                echo "  ⚠️ Большой размер: $size байт"
+              fi
+              
+              echo ""
+            fi
+          done
+
+      - name: 🔍 Check JavaScript
+        run: |
+          echo "🔍 Проверка JavaScript в HTML файлах..."
+          for file in *.html; do
+            if [ -f "$file" ]; then
+              # Извлекаем JS из HTML и проверяем базовые ошибки
+              js_lines=$(sed -n '/<script>/,/<\/script>/p' "$file" | wc -l)
+              echo "  $file: $js_lines строк JavaScript"
+              
+              # Проверка на console.log (для отладки)
+              debug_logs=$(grep -c "console.log" "$file" || true)
+              if [ "$debug_logs" -gt 5 ]; then
+                echo "  ⚠️ Много console.log ($debug_logs шт.)"
+              fi
+            fi
+          done
+
+      - name: 📊 Count methods
+        run: |
+          echo "📊 Подсчёт методов обхода..."
+          
+          # В BAT файлах
+          bat_methods=$(grep -c ":: ============" *.bat 2>/dev/null | tail -1 | cut -d: -f2 || echo "0")
+          echo "  Методов в BAT: примерно $((bat_methods / 2))"
+          
+          # В HTML файлах
+          html_methods=$(grep -c "case '" *.html 2>/dev/null | tail -1 | cut -d: -f2 || echo "0")
+          echo "  Методов в HTML: примерно $html_methods"
+          
+          # Общее количество
+          total=$((bat_methods / 2 + html_methods))
+          echo "  Всего методов: ~$total"
+
+      - name: 📝 Update README badges
+        run: |
+          # Подсчитываем методы
+          METHODS=$(grep -c ":: ============" *.bat 2>/dev/null | awk -F: '{sum+=$2} END {print sum/2}' || echo "20")
+          
+          # Обновляем бейдж в README если есть
+          if [ -f README.md ]; then
+            sed -i "s/Методов-[0-9]*-/Методов-${METHODS}-/" README.md
+            echo "✅ Бейджи обновлены: $METHODS методов"
+          fi
