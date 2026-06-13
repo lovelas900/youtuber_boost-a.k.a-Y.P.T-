@@ -1,0 +1,32 @@
+name: 🧹 Close stale issues
+
+on:
+  schedule:
+    - cron: '0 0 * * 0'  # Каждое воскресенье
+  workflow_dispatch:
+
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+    
+    steps:
+      - uses: actions/stale@v9
+        with:
+          days-before-stale: 60
+          days-before-close: 14
+          stale-issue-message: |
+            👋 Этот issue был автоматически помечен как устаревший из-за неактивности.
+            
+            Если проблема всё ещё актуальна, пожалуйста:
+            1. Проверьте последнюю версию обходника
+            2. Обновите информацию о проблеме
+            3. Оставьте комментарий
+            
+            Issue будет закрыт через 14 дней если не будет активности.
+          stale-pr-message: '👋 Этот PR помечен как устаревший.'
+          close-issue-message: '🔒 Issue закрыт из-за неактивности.'
+          stale-issue-label: 'stale'
+          exempt-issue-labels: 'pinned,security,bug,enhancement'
