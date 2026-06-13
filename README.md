@@ -181,6 +181,10 @@ FAQ
 ⭐ Поддержите проект
 Поставьте звезду ⭐ на GitHub — это помогает проекту расти!
 
+Лицензия
+MIT © lovelas900 2026
+Свободно используйте, модифицируйте, распространяйте и форкуйте(делайте свои форки и сборки)
+
 Структура метода в HTML
 javascript
 // В функцию openMethod добавьте:
@@ -213,3 +217,92 @@ if (method === 'new_method') {
 3)Работает на разных платформах
 
 4)Не ломает другие методы
+
+Бонус: файлы для scripts/
+scripts/proxy_server.py
+python
+#!/usr/bin/env python3
+"""Простой HTTP-прокси для YouTube"""
+import http.server
+import socketserver
+import urllib.request
+import ssl
+
+PORT = 8080
+
+class Proxy(http.server.SimpleHTTPRequestHandler):
+    def do_GET(self):
+        url = self.path[1:]
+        if not url.startswith('http'):
+            self.send_response(400)
+            self.end_headers()
+            self.wfile.write(b'Use: http://127.0.0.1:8080/https://youtube.com')
+            return
+        try:
+            ctx = ssl.create_default_context()
+            ctx.check_hostname = False
+            ctx.verify_mode = ssl.CERT_NONE
+            req = urllib.request.Request(url, headers={
+                'User-Agent': 'Mozilla/5.0'
+            })
+            with urllib.request.urlopen(req, timeout=30, context=ctx) as r:
+                self.send_response(r.status)
+                for k, v in r.headers.items():
+                    if k.lower() not in ['transfer-encoding', 'content-encoding']:
+                        self.send_header(k, v)
+                self.end_headers()
+                self.wfile.write(r.read())
+        except Exception as e:
+            self.send_response(500)
+            self.end_headers()
+            self.wfile.write(str(e).encode())
+
+if __name__ == '__main__':
+    with socketserver.TCPServer(("", PORT), Proxy) as httpd:
+        print(f"Прокси запущен на http://127.0.0.1:{PORT}")
+        httpd.serve_forever()
+scripts/proxy_server.js
+javascript
+// Простой HTTP-прокси для YouTube (Node.js)
+const http = require('http');
+const https = require('https');
+const PORT = 8080;
+
+http.createServer((req, res) => {
+    const url = req.url.substring(1);
+    if (!url.startsWith('http')) {
+        res.writeHead(400);
+        return res.end('Use: http://127.0.0.1:8080/https://youtube.com');
+    }
+    const u = new URL(url);
+    const opts = {
+        hostname: u.hostname,
+        port: u.port || (u.protocol === 'https:' ? 443 : 80),
+        path: u.pathname + u.search,
+        method: req.method,
+        headers: { ...req.headers, host: u.hostname }
+    };
+    const proxy = (u.protocol === 'https:' ? https : http).request(opts, r => {
+        res.writeHead(r.statusCode, r.headers);
+        r.pipe(res);
+    });
+    req.pipe(proxy);
+}).listen(PORT, () => console.log(`Прокси: http://127.0.0.1:${PORT}`));
+scripts/setup_dns.ps1
+powershell
+# PowerShell скрипт для настройки DNS
+param(
+    [string]$Interface = "Wi-Fi",
+    [string]$PrimaryDNS = "1.1.1.1",
+    [string]$SecondaryDNS = "1.0.0.1"
+)
+
+Write-Host "Настройка DNS для интерфейса: $Interface"
+Write-Host "Основной DNS: $PrimaryDNS"
+Write-Host "Запасной DNS: $SecondaryDNS"
+
+netsh interface ip set dns "$Interface" static $PrimaryDNS
+netsh interface ip add dns "$Interface" $SecondaryDNS index=2
+ipconfig /flushdns
+
+Write-Host "[OK] DNS настроены!"
