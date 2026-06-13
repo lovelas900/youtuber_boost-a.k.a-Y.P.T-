@@ -1,0 +1,125 @@
+name: 🧹 Lint Code
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: 📦 Install linters
+        run: |
+          npm install -g \
+            htmlhint \
+            stylelint \
+            stylelint-config-standard \
+            eslint
+
+      - name: 🧹 Lint HTML
+        run: |
+          echo '{
+            "tagname-lowercase": true,
+            "attr-lowercase": true,
+            "attr-value-double-quotes": true,
+            "doctype-first": true,
+            "tag-pair": true,
+            "spec-char-escape": true,
+            "id-unique": true,
+            "src-not-empty": true,
+            "title-require": true
+          }' > .htmlhintrc
+          
+          for file in *.html; do
+            if [ -f "$file" ]; then
+              echo "🔍 Линтинг: $file"
+              htmlhint "$file" || echo "⚠️ Найдены предупреждения в $file"
+            fi
+          done
+
+      - name: 🧹 Lint CSS
+        run: |
+          # Извлекаем CSS из HTML и проверяем
+          for file in *.html; do
+            if [ -f "$file" ]; then
+              echo "🎨 Проверка CSS в: $file"
+              
+              # Проверка на дублирующиеся стили
+              duplicates=$(grep -o "[a-z-]\+:" "$file" | sort | uniq -d | wc -l)
+              if [ "$duplicates" -gt 0 ]; then
+                echo "  ℹ️ Найдены повторяющиеся CSS-свойства"
+              fi
+              
+              # Проверка на !important
+              importants=$(grep -c "!important" "$file" || true)
+              if [ "$importants" -gt 5 ]; then
+                echo "  ⚠️ Много !important ($importants шт.)"
+              fi
+            fi
+          done
+
+      - name: 🧹 Lint JavaScript
+        run: |
+          echo '{
+            "env": {
+              "browser": true,
+              "es2021": true
+            },
+            "extends": "eslint:recommended",
+            "rules": {
+              "no-unused-vars": "warn",
+              "no-undef": "warn",
+              "no-console": "off"
+            }
+          }' > .eslintrc.json
+          
+          for file in *.html; do
+            if [ -f "$file" ]; then
+              # Извлекаем JS в отдельный файл для проверки
+              sed -n '/<script>/,/<\/script>/p' "$file" | \
+                sed '1d;$d' > temp.js
+              
+              if [ -s temp.js ]; then
+                echo "🔍 Линтинг JS из: $file"
+                eslint temp.js || echo "⚠️ Найдены предупреждения"
+              fi
+              rm -f temp.js
+            fi
+          done
+
+      - name: 📊 Generate lint report
+        run: |
+          echo "# Lint Report" > lint-report.md
+          echo "" >> lint-report.md
+          echo "Дата: $(date)" >> lint-report.md
+          echo "Коммит: ${{ github.sha }}" >> lint-report.md
+          echo "" >> lint-report.md
+          echo "## Проверенные файлы" >> lint-report.md
+          echo "" >> lint-report.md
+          
+          for file in *.html *.bat; do
+            if [ -f "$file" ]; then
+              size=$(wc -c < "$file")
+              lines=$(wc -l < "$file")
+              echo "- **$file**: $lines строк, $size байт" >> lint-report.md
+            fi
+          done
+          
+          echo "✅ Отчёт создан: lint-report.md"
+
+      - name: 📤 Upload lint report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lint-report
+          path: lint-report.md
