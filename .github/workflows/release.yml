@@ -1,0 +1,57 @@
+name: 📦 Create Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Версия для релиза'
+        required: true
+        default: 'v3.0'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 📦 Create Release Archive
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/}
+          echo "Создаю релиз: $VERSION"
+          
+          # Создаём архив с BAT + HTML
+          zip -r youtube-proxy-toolkit-$VERSION.zip \
+            *.bat \
+            *.html \
+            scripts/ \
+            README.md \
+            LICENSE \
+            -x ".git/*" ".github/*"
+          
+          # Создаём отдельно HTML версию
+          zip -r youtube-proxy-html-only-$VERSION.zip \
+            *.html \
+            README.md
+          
+          echo "✅ Архивы созданы"
+
+      - name: 🚀 Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: "YouTube Proxy Toolkit ${{ github.ref_name }}"
+          body_path: CHANGELOG.md
+          files: |
+            youtube-proxy-toolkit-*.zip
+            youtube-proxy-html-only-*.zip
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
