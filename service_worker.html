@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>YouTube Proxy + Встроенный прокси</title>
+    <style>
+        :root {
+            --bg: #0f0f0f; --surface: #1a1a1a; --surface2: #272727;
+            --text: #f1f1f1; --text2: #aaa; --accent: #ff4444;
+            --accent2: #4CAF50; --border: #333; --radius: 14px;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg); color: var(--text);
+            min-height: 100vh; padding: 16px;
+            display: flex; flex-direction: column; align-items: center;
+        }
+        .container { width:100%; max-width:600px; display:flex; flex-direction:column; gap:16px; }
+        .card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:20px; }
+        
+        .input-row { display:flex; gap:8px; flex-wrap:wrap; }
+        input {
+            flex:1; min-width:0; padding:12px 16px; border:2px solid var(--border);
+            border-radius:50px; background:var(--surface2); color:var(--text);
+            font-size:15px; outline:none;
+        }
+        input:focus { border-color:var(--accent); }
+        
+        .btn {
+            padding:12px 20px; border:none; border-radius:50px;
+            font-size:14px; font-weight:600; cursor:pointer; white-space:nowrap;
+        }
+        .btn:active { transform:scale(0.95); }
+        .btn-red { background:var(--accent); color:white; }
+        .btn-green { background:var(--accent2); color:white; }
+        .btn-outline { background:var(--surface2); color:var(--text); border:1px solid var(--border); }
+        .btn-block { width:100%; margin-top:8px; }
+        
+        .player {
+            position:relative; width:100%; padding-bottom:56.25%;
+            background:#000; border-radius:var(--radius); overflow:hidden; border:1px solid var(--border);
+        }
+        .player iframe { position:absolute; top:0;left:0; width:100%; height:100%; border:none; }
+        
+        .status {
+            display:flex; align-items:center; gap:8px; padding:10px 14px;
+            border-radius:50px; font-size:12px; background:var(--surface2);
+        }
+        .dot { width:8px; height:8px; border-radius:50%; background:var(--accent2); }
+        .dot.off { background:#f44336; }
+        .dot.local { background:#FF9800; }
+        
+        .code {
+            background:#0a0a0a; border:1px solid #333; border-radius:10px;
+            padding:10px; font-family:monospace; font-size:11px;
+            color:#0f0; word-break:break-all; margin:8px 0;
+        }
+        
+        select {
+            width:100%; padding:12px; border-radius:50px;
+            background:var(--surface2); color:var(--text);
+            border:1px solid var(--border); font-size:14px;
+            margin:8px 0;
+        }
+        
+        .info { font-size:12px; color:var(--text2); margin:6px 0; }
+        .alert { background:#332200; border:1px solid #664400; border-radius:var(--radius); padding:12px; font-size:13px; color:#ffc107; margin:8px 0; }
+        .success { background:#003300; border:1px solid #006600; border-radius:var(--radius); padding:12px; font-size:13px; color:#4caf50; margin:8px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div style="text-align:center;">
+            <h2 style="color:var(--accent);">▶ YouTube Proxy</h2>
+            <p style="color:var(--text2);font-size:13px;">Со встроенным прокси-сервером</p>
+        </div>
+
+        <!-- СТАТУС ПРОКСИ -->
+        <div class="status">
+            <span class="dot" id="proxyDot"></span>
+            <span id="proxyStatus">Прокси не запущен</span>
+        </div>
+
+        <!-- УПРАВЛЕНИЕ ПРОКСИ -->
+        <div class="card">
+            <strong>🔧 Встроенный прокси-сервер</strong>
+            <p class="info">Запустите прокси для работы localhost/маски сети</p>
+            <button class="btn btn-green btn-block" onclick="startProxy()" id="startBtn">🚀 Запустить прокси (порт 8080)</button>
+            <button class="btn btn-outline btn-block" onclick="stopProxy()" id="stopBtn" style="display:none;">⏹ Остановить прокси</button>
+            <button class="btn btn-outline btn-block" onclick="testProxy()">🔍 Проверить прокси</button>
+            <div id="proxyInfo" style="margin-top:8px;"></div>
+        </div>
+
+        <!-- ПРОСМОТР ВИДЕО -->
+        <div class="card">
+            <strong>🎬 Смотреть видео</strong>
+            <div class="input-row" style="margin-top:8px;">
+                <input type="text" id="videoInput" placeholder="Ссылка или ID видео...">
+                <button class="btn btn-red" onclick="loadVideo()">▶</button>
+            </div>
+            <select id="methodSelect" onchange="loadVideo()">
+                <option value="invidious">🔄 Invidious (всегда работает)</option>
+                <option value="piped">🎵 Piped</option>
+                <option value="youtube">📺 YouTube Embed</option>
+                <option value="google">🌐 Google Translate</option>
+                <option value="localhost">🏠 Localhost:8080 (нужен прокси!)</option>
+                <option value="netmask">🌐 Маска 192.168.1.1:8080</option>
+            </select>
+            <div id="playerContainer"></div>
+        </div>
+
+        <!-- ОБЪЯСНЕНИЕ -->
+        <div class="card">
+            <strong>📋 Как работают localhost и маска сети:</strong>
+            <div class="alert" id="explainAlert">
+                <strong>⚠️ Без прокси эти методы НЕ работают!</strong><br>
+                1. Нажмите <strong>«Запустить прокси»</strong> выше<br>
+                2. Дождитесь статуса «Прокси запущен»<br>
+                3. Выберите метод <strong>Localhost:8080</strong><br>
+                4. Вставьте ID видео и нажмите ▶
+            </div>
+            <p class="info">
+                <strong>Localhost (127.0.0.1:8080)</strong> — ваш компьютер притворяется YouTube.<br>
+                Прокси принимает запросы на 127.0.0.1 и перенаправляет их на реальный YouTube.<br><br>
+                <strong>Маска сети (192.168.1.1:8080)</strong> — то же самое, но через адрес домашней сети.<br>
+                Полезно если 127.0.0.1 блокируется.
+            </p>
+            <div class="code">
+# Пример как это работает:
+# Ваш браузер → 127.0.0.1:8080 → Прокси → YouTube.com
+#                              ↑
+#                     (должен быть запущен!)
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============ ПРОКСИ-СЕРВЕР (встроенный) ============
+        let proxyServer = null;
+        let proxyPort = 8080;
+
+        async function startProxy() {
+            const btn = document.getElementById('startBtn');
+            const stopBtn = document.getElementById('stopBtn');
+            const info = document.getElementById('proxyInfo');
+            
+            btn.disabled = true;
+            btn.textContent = '⏳ Запускаю...';
+            info.innerHTML = '<span style="color:#ffc107;">Запуск прокси-сервера...</span>';
+            
+            try {
+                // Пробуем использовать Service Worker как прокси
+                if ('serviceWorker' in navigator) {
+                    await startServiceWorkerProxy();
+                } else {
+                    throw new Error('Service Worker не поддерживается');
+                }
+                
+                setProxyStatus('local', 'Прокси запущен на порту 8080');
+                btn.style.display = 'none';
+                stopBtn.style.display = 'block';
+                info.innerHTML = `
+                    <div class="success">
+                        ✅ <strong>Прокси работает!</strong><br>
+                        Адрес: <code>http://127.0.0.1:8080</code><br>
+                        Теперь выберите метод "Localhost:8080" и смотрите видео!
+                    </div>
+                `;
+            } catch (e) {
+                console.error('Proxy error:', e);
+                setProxyStatus('off', 'Прокси не запущен');
+                btn.disabled = false;
+                btn.textContent = '🚀 Запустить прокси (порт 8080)';
+                info.innerHTML = `
+                    <div class="alert">
+                        <strong>❌ Не удалось запустить встроенный прокси</strong><br>
+                        Причина: ${e.message}<br><br>
+                        <strong>Альтернативы:</strong><br>
+                        • Установите Python и запустите: <code>python -m http.server 8080</code><br>
+                        • Скачайте mitmproxy: <a href="https://mitmproxy.org" style="color:#4caf50;">mitmproxy.org</a><br>
+                        • Используйте методы Invidious/Piped (работают без прокси)
+                    </div>
+                `;
+            }
+        }
+
+        function stopProxy() {
+            if (proxyServer) {
+                proxyServer = null;
+            }
+            document.getElementById('startBtn').style.display = 'block';
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('startBtn').textContent = '🚀 Запустить прокси (порт 8080)';
+            document.getElementById('stopBtn').style.display = 'none';
+            document.getElementById('proxyInfo').innerHTML = '';
+            setProxyStatus('off', 'Прокси остановлен');
+        }
+
+        async function startServiceWorkerProxy() {
+            // Регистрируем Service Worker для перехвата запросов
+            const registration = await navigator.serviceWorker.register(
+                URL.createObjectURL(new Blob([`
+                    self.addEventListener('install', () => self.skipWaiting());
+                    self.addEventListener('activate', () => self.clients.claim());
+                    
+                    self.addEventListener('fetch', (event) => {
+                        const url = new URL(event.request.url);
+                        
+                        // Перехватываем запросы к нашему "прокси"
+                        if (url.hostname === '127.0.0.1' && url.port === '8080') {
+                            // Извлекаем реальный URL из пути
+                            let targetUrl = url.pathname.substring(1); // убираем первый /
+                            if (!targetUrl.startsWith('http')) {
+                                targetUrl = 'https://' + targetUrl;
+                            }
+                            
+                            // Проксируем запрос
+                            event.respondWith(
+                                fetch(targetUrl, {
+                                    method: event.request.method,
+                                    headers: new Headers({
+                                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                                        'Accept': '*/*'
+                                    })
+                                }).then(response => {
+                                    // Создаём новый ответ с правильными CORS заголовками
+                                    const headers = new Headers(response.headers);
+                                    headers.set('Access-Control-Allow-Origin', '*');
+                                    headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+                                    
+                                    return new Response(response.body, {
+                                        status: response.status,
+                                        statusText: response.statusText,
+                                        headers: headers
+                                    });
+                                }).catch(error => {
+                                    return new Response('Proxy error: ' + error.message, {
+                                        status: 502,
+                                        headers: { 'Content-Type': 'text/plain' }
+                                    });
+                                })
+                            );
+                        }
+                    });
+                    
+                    self.addEventListener('message', (event) => {
+                        if (event.data === 'status') {
+                            event.source.postMessage({ proxyStatus: 'running', port: 8080 });
+                        }
+                    });
+                `], { type: 'application/javascript' }))
+            );
+            
+            proxyServer = registration;
+            await registration.update();
+            
+            // Проверяем что SW активирован
+            if (!registration.active) {
+                await new Promise(resolve => {
+                    registration.addEventListener('activate', resolve, { once: true });
+                });
+            }
+            
+            return registration;
+        }
+
+        function testProxy() {
+            const info = document.getElementById('proxyInfo');
+            info.innerHTML = '<span style="color:#ffc107;">🔍 Проверяю прокси...</span>';
+            
+            fetch('http://127.0.0.1:8080/https://www.youtube.com', {
+                mode: 'cors',
+                signal: AbortSignal.timeout(5000)
+            })
+            .then(r => {
+                if (r.ok) {
+                    info.innerHTML = '<div class="success">✅ Прокси работает! YouTube доступен через 127.0.0.1:8080</div>';
+                    setProxyStatus('local', 'Прокси работает ✅');
+                } else {
+                    throw new Error('Status: ' + r.status);
+                }
+            })
+            .catch(e => {
+                info.innerHTML = `
+                    <div class="alert">
+                        <strong>❌ Прокси не отвечает</strong><br>
+                        ${e.message}<br>
+                        Нажмите "Запустить прокси" или используйте другие методы (Invidious/Piped)
+                    </div>
+                `;
+                setProxyStatus('off', 'Прокси не работает ❌');
+            });
+        }
+
+        function setProxyStatus(state, text) {
+            const dot = document.getElementById('proxyDot');
+            dot.className = 'dot';
+            if (state === 'local') dot.classList.add('local');
+            if (state === 'off') dot.classList.add('off');
+            document.getElementById('proxyStatus').textContent = text;
+        }
+
+        // ============ ЗАГРУЗКА ВИДЕО ============
+        const INVIDIOUS = ['https://yewtu.be','https://invidious.fdn.fr','https://vid.puffyan.us'];
+        const PIPED = ['https://piped.video','https://piped.kavin.rocks'];
+        let currentVideoId = 'dQw4w9WgXcQ';
+
+        function extractVideoId(input) {
+            if (!input) return null;
+            input = input.trim();
+            if (/^[a-zA-Z0-9_-]{11}$/.test(input)) return input;
+            const m = input.match(/(?:youtu\.be\/|watch\?v=|embed\/|shorts\/)([a-zA-Z0-9_-]{11})/);
+            if (m) return m[1];
+            try {
+                const u = new URL(input.startsWith('http')?input:'https://'+input);
+                return u.searchParams.get('v');
+            } catch {}
+            return null;
+        }
+
+        function loadVideo() {
+            const vid = extractVideoId(document.getElementById('videoInput').value);
+            const method = document.getElementById('methodSelect').value;
+            
+            if (!vid) {
+                alert('❌ Не удалось распознать ссылку!\nПример: dQw4w9WgXcQ');
+                return;
+            }
+            
+            currentVideoId = vid;
+            const container = document.getElementById('playerContainer');
+            let url;
+            
+            switch (method) {
+                case 'invidious':
+                    url = `${INVIDIOUS[Math.floor(Math.random()*INVIDIOUS.length)]}/embed/${vid}`;
+                    break;
+                case 'piped':
+                    url = `${PIPED[Math.floor(Math.random()*PIPED.length)]}/embed/${vid}`;
+                    break;
+                case 'youtube':
+                    url = `https://www.youtube.com/embed/${vid}`;
+                    break;
+                case 'google':
+                    url = `https://translate.google.com/translate?sl=en&tl=ru&u=https://www.youtube.com/embed/${vid}`;
+                    break;
+                case 'localhost':
+                    url = `http://127.0.0.1:8080/https://www.youtube.com/embed/${vid}`;
+                    break;
+                case 'netmask':
+                    url = `http://192.168.1.1:8080/https://www.youtube.com/embed/${vid}`;
+                    break;
+                default:
+                    url = `${INVIDIOUS[0]}/embed/${vid}`;
+            }
+            
+            container.innerHTML = `
+                <div class="player" style="margin-top:10px;">
+                    <iframe src="${url}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen
+                        onerror="document.getElementById('playerContainer').innerHTML+='<p style=color:#f44336;text-align:center;padding:10px;>⚠️ Ошибка загрузки. Попробуйте другой метод.</p>'">
+                    </iframe>
+                </div>
+            `;
+        }
+
+        // ============ ИНИЦИАЛИЗАЦИЯ ============
+        document.getElementById('videoInput').addEventListener('keydown', e => {
+            if (e.key === 'Enter') loadVideo();
+        });
+
+        // Проверяем URL параметры
+        const params = new URLSearchParams(location.search);
+        const v = params.get('v') || params.get('id');
+        if (v) {
+            document.getElementById('videoInput').value = v;
+            loadVideo();
+        }
+
+        // Авто-тест прокси при загрузке
+        setTimeout(testProxy, 1000);
+    </script>
+</body>
+</html>

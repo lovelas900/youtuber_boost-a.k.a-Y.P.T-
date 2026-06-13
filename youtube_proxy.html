@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Proxy v3.0 — Полный обход блокировки</title>
+    <style>
+        :root {
+            --bg: #0f0f0f; --surface: #1a1a1a; --surface2: #272727;
+            --text: #f1f1f1; --text2: #aaa; --accent: #ff4444;
+            --accent2: #4CAF50; --accent3: #2196F3; --border: #333; --radius: 12px;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg); color: var(--text);
+            min-height: 100vh; display: flex; flex-direction: column;
+            align-items: center; padding: 20px;
+        }
+        .container { width: 100%; max-width: 1100px; display: flex; flex-direction: column; gap: 24px; }
+        .header { text-align: center; padding: 10px 0; }
+        .logo { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 6px; }
+        .logo-icon { width: 48px; height: 48px; background: var(--accent); border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 26px; color: white; }
+        .logo h1 { font-size: 2.2em; font-weight: 800; }
+        .logo h1 span { color: var(--accent); }
+        .subtitle { color: var(--text2); font-size: 0.95em; }
+
+        .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; box-shadow: 0 4px 24px rgba(0,0,0,0.5); }
+
+        .input-group { display: flex; gap: 10px; flex-wrap: wrap; }
+        .input-group input {
+            flex: 1; min-width: 200px; padding: 14px 18px;
+            border: 2px solid var(--border); border-radius: 50px;
+            background: var(--surface2); color: var(--text); font-size: 15px; outline: none;
+        }
+        .input-group input:focus { border-color: var(--accent); }
+        .input-group input::placeholder { color: #666; }
+
+        .btn {
+            padding: 14px 28px; border: none; border-radius: 50px;
+            font-size: 15px; font-weight: 600; cursor: pointer; transition: 0.2s; white-space: nowrap;
+        }
+        .btn-primary { background: var(--accent); color: white; }
+        .btn-primary:hover { background: #cc0000; transform: translateY(-1px); }
+        .btn-green { background: var(--accent2); color: white; }
+        .btn-green:hover { background: #388E3C; }
+        .btn-blue { background: var(--accent3); color: white; }
+        .btn-blue:hover { background: #1976D2; }
+        .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+        .btn-secondary:hover { background: #333; }
+        .btn-sm { padding: 8px 16px; font-size: 13px; border-radius: 20px; }
+
+        .tabs { display: flex; gap: 6px; margin-bottom: 20px; flex-wrap: wrap; }
+        .tab {
+            padding: 10px 18px; border-radius: 50px; cursor: pointer;
+            font-size: 13px; font-weight: 500; background: var(--surface2);
+            color: var(--text2); border: 1px solid transparent; transition: 0.2s; user-select: none;
+        }
+        .tab:hover { color: var(--text); background: #333; }
+        .tab.active { background: var(--accent); color: white; }
+
+        .player-wrapper {
+            position: relative; width: 100%; padding-bottom: 56.25%;
+            background: #000; border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border);
+        }
+        .player-wrapper iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
+
+        .methods-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; }
+        .method-card {
+            background: var(--surface2); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 16px; cursor: pointer;
+            transition: 0.2s; text-align: center;
+        }
+        .method-card:hover { border-color: var(--accent); background: #2a2a2a; transform: translateY(-2px); }
+        .method-card .icon { font-size: 32px; margin-bottom: 8px; }
+        .method-card .name { font-weight: 600; margin-bottom: 4px; }
+        .method-card .desc { font-size: 12px; color: var(--text2); }
+
+        .section-title {
+            font-size: 1.1em; font-weight: 600; margin: 20px 0 12px 0;
+            padding-bottom: 8px; border-bottom: 2px solid var(--accent);
+            display: flex; align-items: center; gap: 8px;
+        }
+        .section-title.blue { border-bottom-color: var(--accent3); }
+        .section-title.green { border-bottom-color: var(--accent2); }
+
+        .results { display: flex; flex-direction: column; gap: 12px; }
+        .result-item {
+            display: flex; gap: 14px; padding: 12px; background: var(--surface2);
+            border-radius: var(--radius); cursor: pointer; border: 1px solid transparent;
+        }
+        .result-item:hover { border-color: var(--accent); background: #2a2a2a; }
+        .result-thumb { width: 160px; min-width: 160px; height: 90px; background: #000; border-radius: 8px; overflow: hidden; }
+        .result-thumb img { width: 100%; height: 100%; object-fit: cover; }
+        .result-info { display: flex; flex-direction: column; gap: 6px; overflow: hidden; }
+        .result-title { font-weight: 600; font-size: 15px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .result-channel { font-size: 13px; color: var(--text2); }
+        .result-meta { font-size: 12px; color: #777; }
+
+        .status { padding: 10px 16px; border-radius: 50px; font-size: 13px; display: inline-flex; align-items: center; gap: 8px; }
+        .status-ok { background: #1a3a1a; color: #4caf50; }
+        .status-err { background: #3a1a1a; color: #f44336; }
+
+        .flex-between { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+        .badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; background: #2a2a2a; color: #aaa; }
+        .badge-green { background: #1a3a1a; color: #4caf50; }
+        .badge-yellow { background: #3a351a; color: #ffc107; }
+        .badge-blue { background: #1a2a3a; color: #64B5F6; }
+
+        select {
+            padding: 8px 14px; border-radius: 50px; background: var(--surface2);
+            color: var(--text); border: 1px solid var(--border); font-size: 14px; cursor: pointer;
+        }
+
+        .code-block {
+            background: #0a0a0a; border: 1px solid #333; border-radius: 8px;
+            padding: 14px; font-family: 'Courier New', monospace; font-size: 13px;
+            color: #0f0; word-break: break-all; margin: 8px 0; overflow-x: auto;
+        }
+
+        .info-box {
+            background: #1a1a2e; border: 1px solid #333; border-radius: var(--radius);
+            padding: 14px 18px; margin: 12px 0; font-size: 13px; color: #aab;
+        }
+        .info-box strong { color: #ccd; }
+
+        .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        @media (max-width: 700px) { .two-col { grid-template-columns: 1fr; } }
+        @media (max-width: 500px) {
+            .result-item { flex-direction: column; }
+            .result-thumb { width: 100%; min-width: 100%; height: 180px; }
+            .input-group { flex-direction: column; }
+            .methods-grid { grid-template-columns: 1fr 1fr; }
+            .tabs { gap: 4px; }
+            .tab { padding: 8px 12px; font-size: 12px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">
+                <div class="logo-icon">▶</div>
+                <h1>You<span>Tube</span> <span style="font-size:0.5em;color:var(--text2);">Proxy v3.0</span></h1>
+            </div>
+            <p class="subtitle">VPN • VPS • Иностранный прокси • ByeDPI • Маска сети • Localhost</p>
+        </div>
+
+        <div class="card">
+            <div class="tabs">
+                <div class="tab active" data-tab="watch">🎬 Смотреть</div>
+                <div class="tab" data-tab="search">🔍 Поиск</div>
+                <div class="tab" data-tab="methods">🔄 Все методы</div>
+                <div class="tab" data-tab="vpn">🌍 VPN/VPS</div>
+                <div class="tab" data-tab="dpi">🛡️ ByeDPI</div>
+                <div class="tab" data-tab="proxy">🔗 Прокси</div>
+                <div class="tab" data-tab="localhost">🏠 Localhost/Маска</div>
+                <div class="tab" data-tab="download">⬇ Скачать</div>
+            </div>
+
+            <!-- Watch tab -->
+            <div id="tab-watch" class="tab-content">
+                <div class="input-group">
+                    <input type="text" id="videoInput" placeholder="Ссылка или ID видео...">
+                    <button class="btn btn-primary" onclick="loadVideo()">▶ Смотреть</button>
+                </div>
+                <div style="margin-top:10px;font-size:13px;color:var(--text2);">
+                    Примеры: <code>dQw4w9WgXcQ</code> • <code>youtube.com/watch?v=...</code> • <code>youtu.be/...</code>
+                </div>
+                <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+                    <label>Метод:</label>
+                    <select id="watchMethod">
+                        <optgroup label="Альтернативные фронтенды">
+                            <option value="auto">Авто (Invidious → YouTube)</option>
+                            <option value="invidious">Invidious</option>
+                            <option value="piped">Piped</option>
+                        </optgroup>
+                        <optgroup label="Прокси">
+                            <option value="youtube_embed">YouTube Embed (прямой)</option>
+                            <option value="google_translate">Google Translate</option>
+                            <option value="nocookie">YouTube NoCookie</option>
+                        </optgroup>
+                        <optgroup label="Локальные">
+                            <option value="localhost">Через localhost:8080</option>
+                            <option value="netmask">Через маску сети</option>
+                            <option value="socks5">Через SOCKS5 (VPS/SSH)</option>
+                        </optgroup>
+                        <optgroup label="DPI обход">
+                            <option value="byedpi">Через ByeDPI (127.0.0.1:1080)</option>
+                        </optgroup>
+                    </select>
+                    <button class="btn btn-green btn-sm" onclick="testAllMethods()">🔄 Тест всех</button>
+                </div>
+                <div id="playerContainer" style="margin-top:16px;"></div>
+            </div>
+
+            <!-- Search tab -->
+            <div id="tab-search" class="tab-content" style="display:none;">
+                <div class="input-group">
+                    <input type="text" id="searchInput" placeholder="Поиск видео...">
+                    <button class="btn btn-primary" onclick="searchVideos()">🔍 Искать</button>
+                </div>
+                <div id="searchResults" class="results" style="margin-top:16px;"></div>
+            </div>
+
+            <!-- All Methods tab -->
+            <div id="tab-methods" class="tab-content" style="display:none;">
+                <div class="section-title">🔄 Альтернативные фронтенды</div>
+                <div class="methods-grid">
+                    <div class="method-card" onclick="openMethodWindow('invidious')"><div class="icon">🔄</div><div class="name">Invidious</div><div class="desc">yewtu.be и др.</div></div>
+                    <div class="method-card" onclick="openMethodWindow('piped')"><div class="icon">🎵</div><div class="name">Piped</div><div class="desc">Лёгкий фронтенд</div></div>
+                    <div class="method-card" onclick="openMethodWindow('cloudtube')"><div class="icon">☁️</div><div class="name">CloudTube</div><div class="desc">Минималистичный</div></div>
+                </div>
+
+                <div class="section-title green">🌍 VPN / VPS / Прокси</div>
+                <div class="methods-grid">
+                    <div class="method-card" onclick="openMethodWindow('vpn_check')"><div class="icon">🔐</div><div class="name">Проверить IP</div><div class="desc">Узнать страну</div></div>
+                    <div class="method-card" onclick="openMethodWindow('vps_ssh')"><div class="icon">🖥️</div><div class="name">VPS SSH</div><div class="desc">SOCKS5 туннель</div></div>
+                    <div class="method-card" onclick="openMethodWindow('foreign_proxy')"><div class="icon">🌐</div><div class="name">Прокси</div><div class="desc">Из другой страны</div></div>
+                    <div class="method-card" onclick="openMethodWindow('proxy_list')"><div class="icon">📋</div><div class="name">Списки прокси</div><div class="desc">Бесплатные</div></div>
+                </div>
+
+                <div class="section-title blue">🛡️ DPI обход</div>
+                <div class="methods-grid">
+                    <div class="method-card" onclick="openMethodWindow('byedpi')"><div class="icon">🛡️</div><div class="name">ByeDPI</div><div class="desc">Обход DPI</div></div>
+                    <div class="method-card" onclick="openMethodWindow('goodbyedpi')"><div class="icon">🛡️</div><div class="name">GoodbyeDPI</div><div class="desc">Альтернатива</div></div>
+                </div>
+            </div>
+
+            <!-- VPN/VPS tab -->
+            <div id="tab-vpn" class="tab-content" style="display:none;">
+                <div class="two-col">
+                    <div>
+                        <div class="section-title">🔐 VPN</div>
+                        <div class="info-box">
+                            <strong>Бесплатные VPN:</strong><br>
+                            • <a href="https://protonvpn.com" target="_blank" style="color:var(--accent3);">ProtonVPN</a> (безлимит)<br>
+                            • <a href="https://windscribe.com" target="_blank" style="color:var(--accent3);">Windscribe</a> (10 ГБ/мес)<br>
+                            • <a href="https://1.1.1.1" target="_blank" style="color:var(--accent3);">Cloudflare WARP</a><br>
+                        </div>
+                        <button class="btn btn-blue btn-sm" onclick="checkCurrentIP()">🌍 Проверить мой IP</button>
+                        <div id="ipInfo" style="margin-top:8px;"></div>
+                    </div>
+                    <div>
+                        <div class="section-title">🖥️ VPS SSH Туннель</div>
+                        <div class="info-box">
+                            <strong>Команда для SSH туннеля:</strong>
+                            <div class="code-block">ssh -D 1080 -N user@ваш_vps_ip</div>
+                            После этого настройте SOCKS5 прокси: <strong>127.0.0.1:1080</strong>
+                        </div>
+                        <div class="info-box">
+                            <strong>Дешёвые VPS:</strong><br>
+                            • <a href="https://www.oracle.com/cloud/free" target="_blank" style="color:var(--accent3);">Oracle Cloud</a> (бесплатно!)<br>
+                            • <a href="https://aeza.net" target="_blank" style="color:var(--accent3);">Aeza</a> (от €2/мес)<br>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ByeDPI tab -->
+            <div id="tab-dpi" class="tab-content" style="display:none;">
+                <div class="section-title blue">🛡️ ByeDPI — обход Deep Packet Inspection</div>
+                <div class="info-box">
+                    <strong>ByeDPI</strong> — утилита для обхода DPI-блокировок (РКН, провайдерские блокировки).
+                    Работает путём фрагментации TLS-пакетов.
+                </div>
+                <div class="two-col">
+                    <div>
+                        <p style="margin-bottom:8px;"><strong>1. Скачайте ByeDPI:</strong></p>
+                        <button class="btn btn-blue btn-sm" onclick="window.open('https://github.com/hufrea/byedpi/releases','_blank')">📥 Скачать с GitHub</button>
+                        <p style="margin-top:12px;"><strong>2. Запустите:</strong></p>
+                        <div class="code-block">ciadpi.exe --tlsrec 1 --split 1</div>
+                        <p style="font-size:12px;color:var(--text2);">Прокси будет на 127.0.0.1:1080</p>
+                    </div>
+                    <div>
+                        <p style="margin-bottom:8px;"><strong>3. Настройте браузер:</strong></p>
+                        <div class="info-box">
+                            Прокси: <strong>SOCKS5</strong><br>
+                            Адрес: <strong>127.0.0.1</strong><br>
+                            Порт: <strong>1080</strong>
+                        </div>
+                        <button class="btn btn-green btn-sm" onclick="setByeDPIProxy()">⚡ Настроить прокси для ByeDPI</button>
+                        <div id="byedpiStatus" style="margin-top:8px;"></div>
+                    </div>
+                </div>
+                <div style="margin-top:12px;">
+                    <button class="btn btn-primary btn-sm" onclick="openYouTubeWithByeDPI()">▶ Открыть YouTube через ByeDPI</button>
+                    <button class="btn btn-secondary btn-sm" style="margin-left:8px;" onclick="window.open('https://github.com/hufrea/byedpi#readme','_blank')">📖 Инструкция</button>
+                </div>
+            </div>
+
+            <!-- Proxy tab -->
+            <div id="tab-proxy" class="tab-content" style="display:none;">
+                <div class="section-title">🔗 Иностранный прокси</div>
+                <div class="info-box">
+                    <strong>Настройка прокси вручную:</strong><br>
+                    Выберите тип прокси и введите адрес. Системный прокси будет настроен автоматически.
+                </div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0;">
+                    <button class="btn btn-secondary btn-sm" onclick="setSystemProxy('http')">HTTP прокси</button>
+                    <button class="btn btn-secondary btn-sm" onclick="setSystemProxy('https')">HTTPS прокси</button>
+                    <button class="btn btn-secondary btn-sm" onclick="setSystemProxy('socks5')">SOCKS5 прокси</button>
+                    <button class="btn btn-secondary btn-sm" onclick="disableSystemProxy()">Отключить прокси</button>
+                </div>
+                <div class="input-group" style="margin-top:8px;">
+                    <input type="text" id="proxyInput" placeholder="IP:PORT (например: 1.2.3.4:8080)">
+                    <button class="btn btn-primary btn-sm" onclick="applyCustomProxy()">Применить</button>
+                </div>
+                <div id="proxyStatus" style="margin-top:8px;"></div>
+                <div class="info-box" style="margin-top:12px;">
+                    <strong>Где взять прокси:</strong><br>
+                    <a href="https://free-proxy-list.net" target="_blank" style="color:var(--accent3);">free-proxy-list.net</a> •
+                    <a href="https://proxyscrape.com" target="_blank" style="color:var(--accent3);">proxyscrape.com</a> •
+                    <a href="https://openproxy.space" target="_blank" style="color:var(--accent3);">openproxy.space</a> •
+                    <a href="https://hidemy.name/proxy-list" target="_blank" style="color:var(--accent3);">hidemy.name</a>
+                </div>
+            </div>
+
+            <!-- Localhost/Mask tab -->
+            <div id="tab-localhost" class="tab-content" style="display:none;">
+                <div class="two-col">
+                    <div>
+                        <div class="section-title">🏠 Localhost</div>
+                        <p style="color:var(--text2);font-size:13px;">YouTube через 127.0.0.1 (нужен локальный прокси на порту 8080)</p>
+                        <div style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0;">
+                            <button class="btn btn-secondary btn-sm" onclick="testLocalhost('127.0.0.1')">127.0.0.1</button>
+                            <button class="btn btn-secondary btn-sm" onclick="testLocalhost('localhost')">localhost</button>
+                        </div>
+                        <div id="localhostResult" style="font-size:12px;"></div>
+                    </div>
+                    <div>
+                        <div class="section-title">🌐 Маска сети</div>
+                        <p style="color:var(--text2);font-size:13px;">DNS Rebinding: подмена IP YouTube</p>
+                        <div style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0;">
+                            <button class="btn btn-secondary btn-sm" onclick="testNetmask('127.0.0.1')">127.0.0.1</button>
+                            <button class="btn btn-secondary btn-sm" onclick="testNetmask('10.0.0.1')">10.0.0.1</button>
+                            <button class="btn btn-secondary btn-sm" onclick="testNetmask('192.168.1.1')">192.168.1.1</button>
+                        </div>
+                        <div id="netmaskResult" style="font-size:12px;"></div>
+                    </div>
+                </div>
+                <div class="info-box" style="margin-top:12px;">
+                    <strong>Пример HOSTS файла для маски сети:</strong>
+                    <div class="code-block">127.0.0.1 youtube.com
+127.0.0.1 www.youtube.com
+127.0.0.1 m.youtube.com</div>
+                </div>
+            </div>
+
+            <!-- Download tab -->
+            <div id="tab-download" class="tab-content" style="display:none;">
+                <div class="input-group">
+                    <input type="text" id="downloadInput" placeholder="Вставьте ссылку на видео...">
+                    <button class="btn btn-primary" onclick="downloadVideo()">⬇ Скачать</button>
+                </div>
+                <div class="methods-grid" style="margin-top:16px;">
+                    <div class="method-card" onclick="openDownloader('y2mate')"><div class="icon">📥</div><div class="name">Y2Mate</div></div>
+                    <div class="method-card" onclick="openDownloader('savefrom')"><div class="icon">💾</div><div class="name">SaveFrom</div></div>
+                    <div class="method-card" onclick="openDownloader('9convert')"><div class="icon">🎵</div><div class="name">9Convert</div></div>
+                    <div class="method-card" onclick="openDownloader('yt1s')"><div class="icon">🎬</div><div class="name">YT1s</div></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex-between">
+            <span class="status status-ok" id="statusBadge">✅ Готов к работе</span>
+            <span class="badge badge-yellow" id="methodBadge">Метод: Invidious</span>
+        </div>
+    </div>
+
+    <script>
+        const INVIDIOUS_INSTANCES = ['https://yewtu.be','https://invidious.fdn.fr','https://vid.puffyan.us','https://invidious.snopyta.org','https://invidious.kavin.rocks','https://inv.riverside.rocks','https://yt.artemislena.eu'];
+        const PIPED_INSTANCES = ['https://piped.video','https://piped.kavin.rocks','https://piped.syncpundit.io'];
+        const CORS_PROXIES = ['https://api.allorigins.win/raw?url=','https://corsproxy.io/?','https://api.codetabs.com/v1/proxy?quest='];
+        let currentVideoId = 'dQw4w9WgXcQ';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => switchTab(t.dataset.tab)));
+            ['videoInput','searchInput','downloadInput'].forEach(id => {
+                const el = document.getElementById(id); if (!el) return;
+                el.addEventListener('keydown', e => { if (e.key==='Enter') { if(id==='videoInput')loadVideo(); else if(id==='searchInput')searchVideos(); else downloadVideo(); }});
+            });
+            checkUrlParams();
+            console.log('✅ YouTube Proxy v3.0 готов! VPN/VPS/ByeDPI/Прокси');
+        });
+
+        function checkUrlParams() { const p=new URLSearchParams(location.search); const v=p.get('v')||p.get('id'); if(v){document.getElementById('videoInput').value=v;loadVideo();} }
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+            const te=document.querySelector(`[data-tab="${tab}"]`); if(te)te.classList.add('active');
+            document.querySelectorAll('.tab-content').forEach(c=>c.style.display='none');
+            const tc=document.getElementById(`tab-${tab}`); if(tc)tc.style.display='block';
+        }
+        function extractVideoId(i) {
+            if(!i)return null; i=i.trim();
+            if(/^[a-zA-Z0-9_-]{11}$/.test(i))return i;
+            const sm=i.match(/youtu\.be\/([a-zA-Z0-9_-]{11})/); if(sm)return sm[1];
+            const shm=i.match(/youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/); if(shm)return shm[1];
+            const em=i.match(/youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/); if(em)return em[1];
+            try{const u=new URL(i.startsWith('http')?i:'https://'+i); const v=u.searchParams.get('v'); if(v&&/^[a-zA-Z0-9_-]{11}$/.test(v))return v;}catch{}
+            return null;
+        }
+
+        function loadVideo() {
+            const vid=extractVideoId(document.getElementById('videoInput').value);
+            const m=document.getElementById('watchMethod').value;
+            if(!vid){alert('❌ Не удалось распознать ID видео!');return;}
+            currentVideoId=vid;
+            const c=document.getElementById('playerContainer');
+            let url,nm;
+            switch(m){
+                case 'invidious':url=`${getRand(INVIDIOUS_INSTANCES)}/embed/${vid}`;nm='Invidious';break;
+                case 'piped':url=`${getRand(PIPED_INSTANCES)}/embed/${vid}`;nm='Piped';break;
+                case 'youtube_embed':url=`https://www.youtube.com/embed/${vid}`;nm='YouTube Embed';break;
+                case 'google_translate':url=`https://translate.google.com/translate?sl=en&tl=ru&u=https://www.youtube.com/embed/${vid}`;nm='Google Translate';break;
+                case 'nocookie':url=`https://www.youtube-nocookie.com/embed/${vid}`;nm='NoCookie';break;
+                case 'localhost':url=`http://127.0.0.1:8080/https://www.youtube.com/embed/${vid}`;nm='Localhost';break;
+                case 'netmask':url=`http://192.168.1.1:8080/https://www.youtube.com/embed/${vid}`;nm='Маска сети';break;
+                case 'socks5':url=`https://www.youtube.com/embed/${vid}`;nm='SOCKS5 (VPS)';break;
+                case 'byedpi':url=`https://www.youtube.com/embed/${vid}`;nm='ByeDPI';break;
+                default:url=`${getRand(INVIDIOUS_INSTANCES)}/embed/${vid}`;nm='Invidious (авто)';break;
+            }
+            c.innerHTML=`<div class="player-wrapper"><iframe src="${url}" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen loading="lazy" onerror="fallbackPlayer('${vid}')"></iframe></div>
+            <div class="flex-between" style="margin-top:12px;"><div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn btn-secondary btn-sm" onclick="copyLink('${vid}')">📋 Копировать</button>
+            <button class="btn btn-secondary btn-sm" onclick="window.open('https://www.youtube.com/watch?v=${vid}','_blank')">🔗 Оригинал</button>
+            <button class="btn btn-secondary btn-sm" onclick="switchTab('download');document.getElementById('downloadInput').value='${vid}';downloadVideo();">⬇ Скачать</button>
+            </div></div>`;
+            showStatus(`✅ Видео загружено (${vid})`,'ok');
+            document.getElementById('methodBadge').textContent=`Метод: ${nm}`;
+        }
+        function fallbackPlayer(vid){const f=document.querySelector('#playerContainer iframe');if(f){f.src=`https://www.youtube.com/embed/${vid}`;showStatus('⚠️ Fallback','err');}}
+
+        function getRand(arr){return arr[Math.floor(Math.random()*arr.length)];}
+
+        // VPN / IP
+        async function checkCurrentIP(){
+            const d=document.getElementById('ipInfo');
+            d.innerHTML='Проверяю...';
+            try{
+                const r=await fetch('https://api.ipify.org?format=json',{signal:AbortSignal.timeout(5000)});
+                const j=await r.json();
+                const r2=await fetch(`https://ipapi.co/${j.ip}/json/`,{signal:AbortSignal.timeout(5000)});
+                const j2=await r2.json();
+                d.innerHTML=`<span class="badge badge-blue">IP: ${j.ip} | Страна: ${j2.country_name} (${j2.country_code})</span>`;
+            }catch(e){d.innerHTML='<span style="color:#f44336;">❌ Не удалось проверить IP</span>';}
+        }
+
+        // ByeDPI
+        function setByeDPIProxy(){
+            document.getElementById('byedpiStatus').innerHTML='<span style="color:var(--accent2);">✅ Настройте прокси вручную: SOCKS5 127.0.0.1:1080<br>Или запустите BAT-файл → пункт [12]</span>';
+            window.open('ms-settings:network-proxy','_blank');
+        }
+        function openYouTubeWithByeDPI(){
+            document.getElementById('watchMethod').value='byedpi';
+            loadVideo();
+            showStatus('▶ YouTube через ByeDPI','ok');
+        }
+
+        // Proxy
+        function setSystemProxy(type){
+            const addr=prompt(`Введите ${type.toUpperCase()} прокси (IP:PORT):`);
+            if(!addr)return;
+            document.getElementById('proxyInput').value=addr;
+            applyCustomProxy(type);
+        }
+        function applyCustomProxy(type){
+            const addr=document.getElementById('proxyInput').value;
+            if(!addr)return;
+            const t=type||'http';
+            document.getElementById('proxyStatus').innerHTML=`<span style="color:var(--accent2);">✅ Настройте системный прокси: ${t}=${addr}<br>Windows: Параметры → Сеть → Прокси</span>`;
+            window.open('ms-settings:network-proxy','_blank');
+        }
+        function disableSystemProxy(){
+            document.getElementById('proxyStatus').innerHTML='<span style="color:var(--accent);">Отключите прокси в настройках Windows</span>';
+            window.open('ms-settings:network-proxy','_blank');
+        }
+
+        // Localhost / Netmask
+        function testLocalhost(host){
+            const d=document.getElementById('localhostResult');
+            d.innerHTML=`🔍 Проверяю http://${host}:8080...`;
+            fetch(`http://${host}:8080`,{mode:'no-cors',signal:AbortSignal.timeout(3000)})
+                .then(()=>d.innerHTML=`<span style="color:#4caf50;">✅ ${host}:8080 доступен!</span>`)
+                .catch(()=>d.innerHTML=`<span style="color:#f44336;">❌ ${host}:8080 недоступен</span>`);
+        }
+        function testNetmask(mask){
+            const d=document.getElementById('netmaskResult');
+            d.innerHTML=`🔍 Проверяю http://${mask}:8080...`;
+            fetch(`http://${mask}:8080`,{mode:'no-cors',signal:AbortSignal.timeout(3000)})
+                .then(()=>d.innerHTML=`<span style="color:#4caf50;">✅ ${mask}:8080 доступен!</span>`)
+                .catch(()=>d.innerHTML=`<span style="color:#f44336;">❌ ${mask}:8080 недоступен</span>`);
+        }
+
+        // Methods
+        function openMethodWindow(method){
+            const vid=currentVideoId||extractVideoId(document.getElementById('videoInput').value)||'dQw4w9WgXcQ';
+            const urls={
+                invidious:`${getRand(INVIDIOUS_INSTANCES)}/watch?v=${vid}`,
+                piped:`${getRand(PIPED_INSTANCES)}/watch?v=${vid}`,
+                cloudtube:`https://tube.cadence.moe/watch?v=${vid}`,
+                vpn_check:'https://whatismyipaddress.com',
+                vps_ssh:'https://www.youtube.com',
+                foreign_proxy:'https://hidemy.name/proxy-list',
+                proxy_list:'https://free-proxy-list.net',
+                byedpi:'https://github.com/hufrea/byedpi/releases',
+                goodbyedpi:'https://github.com/ValdikSS/GoodbyeDPI/releases',
+            };
+            window.open(urls[method]||urls.invidious,'_blank');
+        }
+        function testAllMethods(){
+            const methods=['invidious','piped','nocookie','google_translate','localhost','netmask','socks5','byedpi'];
+            alert(`🔄 Открываю ${methods.length} методов...`);
+            methods.forEach((m,i)=>setTimeout(()=>{document.getElementById('watchMethod').value=m;loadVideo();openMethodWindow(m);},i*600));
+        }
+
+        // Search
+        async function searchVideos(){
+            const q=document.getElementById('searchInput').value.trim(); if(!q)return;
+            const d=document.getElementById('searchResults');
+            d.innerHTML='<p style="color:var(--text2);text-align:center;padding:40px;">🔍 Ищем...</p>';
+            try{
+                const v=await searchInvidious(q);displayResults(v);
+                showStatus(`✅ Найдено: ${v.length}`,'ok');
+            }catch(e){d.innerHTML='<p style="color:#f44336;text-align:center;">❌ Ошибка поиска</p>';}
+        }
+        async function searchInvidious(q){
+            const api=`${getRand(INVIDIOUS_INSTANCES)}/api/v1/search?q=${encodeURIComponent(q)}&type=video&limit=20`;
+            for(const p of CORS_PROXIES){try{const r=await fetch(p+encodeURIComponent(api),{signal:AbortSignal.timeout(10000)});if(r.ok){const d=await r.json();if(Array.isArray(d))return d.slice(0,20).map(i=>({id:i.videoId,title:i.title||'?',channel:i.author||'?',views:i.viewCountText||'',duration:i.lengthSeconds?fmtDur(i.lengthSeconds):'',thumbnail:i.videoThumbnails?.[i.videoThumbnails.length-1]?.url||`https://i.ytimg.com/vi/${i.videoId}/hqdefault.jpg`}));}}catch{}}throw new Error('Прокси недоступны');
+        }
+        function displayResults(v){
+            const d=document.getElementById('searchResults');
+            d.innerHTML=v.length?v.map(v=>`<div class="result-item" onclick="playFromSearch('${v.id}')"><div class="result-thumb"><img src="${v.thumbnail}" loading="lazy" onerror="this.style.display='none'"></div><div class="result-info"><div class="result-title">${esc(v.title)}</div><div class="result-channel">${esc(v.channel)}</div><div class="result-meta">${v.views?'👁 '+v.views:''} ${v.duration?'• ⏱ '+v.duration:''}</div></div></div>`).join(''):'<p style="text-align:center;color:var(--text2);">Ничего не найдено</p>';
+        }
+        function playFromSearch(id){switchTab('watch');document.getElementById('videoInput').value=id;loadVideo();scrollTo({top:0,behavior:'smooth'});}
+
+        // Download
+        function downloadVideo(){
+            const vid=extractVideoId(document.getElementById('downloadInput').value);
+            if(!vid){alert('❌ Неверная ссылка');return;}
+            openDownloader('y2mate',vid);
+        }
+        function openDownloader(s,vid){
+            const v=vid||currentVideoId;
+            const u={y2mate:`https://www.y2mate.com/youtube/${v}`,savefrom:`https://en.savefrom.net/1-youtube-downloader/?url=https://www.youtube.com/watch?v=${v}`,'9convert':`https://9convert.com/en/youtube-to-mp4/${v}`,yt1s:`https://yt1s.com/youtube-to-mp4?url=https://www.youtube.com/watch?v=${v}`};
+            window.open(u[s]||u.y2mate,'_blank');
+        }
+
+        function copyLink(vid){navigator.clipboard.writeText(`https://www.youtube.com/watch?v=${vid}`).then(()=>showStatus('📋 Скопировано!','ok'),()=>prompt('Скопируйте:',`https://www.youtube.com/watch?v=${vid}`));}
+        function showStatus(m,t){const b=document.getElementById('statusBadge');b.textContent=m;b.className='status '+(t==='err'?'status-err':'status-ok');}
+        function fmtDur(s){if(!s)return'';s=parseInt(s);const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),se=s%60;return h>0?`${h}:${String(m).padStart(2,'0')}:${String(se).padStart(2,'0')}`:`${m}:${String(se).padStart(2,'0')}`;}
+        function esc(s){const d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
+    </script>
+</body>
+</html>

@@ -1,0 +1,1153 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover, maximum-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="YouTube Proxy">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#0f0f0f">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%23ff4444' width='100' height='100' rx='25'/><text x='50' y='70' text-anchor='middle' fill='white' font-size='55'>▶</text></svg>">
+    <title>YouTube Proxy iOS — Обход блокировки</title>
+    <style>
+        :root {
+            --bg: #0f0f0f;
+            --surface: #1a1a1a;
+            --surface2: #2c2c2c;
+            --text: #f5f5f7;
+            --text2: #98989d;
+            --accent: #ff3b30;
+            --accent2: #34c759;
+            --accent3: #007aff;
+            --accent4: #ff9500;
+            --border: #38383a;
+            --radius: 16px;
+            --safe-bottom: env(safe-area-inset-bottom, 16px);
+            --safe-top: env(safe-area-inset-top, 0px);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            min-height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            padding: 12px;
+            padding-top: calc(12px + var(--safe-top));
+            padding-bottom: calc(90px + var(--safe-bottom));
+            position: relative;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .container {
+            flex: 1;
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 10px 0 4px 0;
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 4px;
+        }
+        .logo-icon {
+            width: 42px;
+            height: 42px;
+            background: var(--accent);
+            border-radius: 13px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            color: white;
+            flex-shrink: 0;
+            box-shadow: 0 2px 8px rgba(255,59,48,0.3);
+        }
+        .logo h1 {
+            font-size: 1.7em;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+        }
+        .logo h1 span { color: var(--accent); }
+        .subtitle {
+            color: var(--text2);
+            font-size: 0.8em;
+            letter-spacing: 0.1px;
+        }
+        .ios-badge {
+            display: inline-block;
+            background: var(--accent2);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-top: 4px;
+            letter-spacing: 0.2px;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--surface);
+            border: 0.5px solid var(--border);
+            border-radius: var(--radius);
+            padding: 18px;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        /* Input */
+        .input-group {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .input-group input {
+            flex: 1;
+            min-width: 0;
+            padding: 13px 15px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: var(--surface2);
+            color: var(--text);
+            font-size: 15px;
+            outline: none;
+            -webkit-appearance: none;
+            transition: border-color 0.2s;
+        }
+        .input-group input:focus {
+            border-color: var(--accent);
+        }
+        .input-group input::placeholder {
+            color: #636366;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 13px 18px;
+            border: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.15s;
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            justify-content: center;
+            letter-spacing: -0.1px;
+        }
+        .btn:active {
+            transform: scale(0.97);
+            opacity: 0.85;
+        }
+        .btn-primary {
+            background: var(--accent);
+            color: white;
+        }
+        .btn-green {
+            background: var(--accent2);
+            color: white;
+        }
+        .btn-blue {
+            background: var(--accent3);
+            color: white;
+        }
+        .btn-orange {
+            background: var(--accent4);
+            color: white;
+        }
+        .btn-secondary {
+            background: var(--surface2);
+            color: var(--text);
+            border: 0.5px solid var(--border);
+        }
+        .btn-sm {
+            padding: 9px 14px;
+            font-size: 13px;
+            border-radius: 10px;
+        }
+        .btn-block {
+            width: 100%;
+            justify-content: center;
+        }
+        .btn-row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin: 6px 0;
+        }
+
+        /* Player */
+        .player-wrapper {
+            position: relative;
+            width: 100%;
+            padding-bottom: 56.25%;
+            background: #000;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 0.5px solid var(--border);
+        }
+        .player-wrapper iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* Grid */
+        .methods-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        .method-card {
+            background: var(--surface2);
+            border: 0.5px solid var(--border);
+            border-radius: 12px;
+            padding: 12px;
+            cursor: pointer;
+            transition: 0.15s;
+            text-align: center;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .method-card:active {
+            transform: scale(0.96);
+            background: #333;
+            border-color: var(--accent);
+        }
+        .method-card .icon {
+            font-size: 26px;
+            margin-bottom: 4px;
+        }
+        .method-card .name {
+            font-weight: 600;
+            font-size: 12px;
+            margin-bottom: 1px;
+        }
+        .method-card .desc {
+            font-size: 10px;
+            color: var(--text2);
+        }
+
+        /* Section title */
+        .section-title {
+            font-size: 0.95em;
+            font-weight: 600;
+            margin: 14px 0 8px 0;
+            padding-bottom: 6px;
+            border-bottom: 2px solid var(--accent);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* Bottom nav */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(26,26,26,0.95);
+            border-top: 0.5px solid var(--border);
+            display: flex;
+            padding: 6px 4px var(--safe-bottom);
+            z-index: 100;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        .nav-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            padding: 8px 2px;
+            cursor: pointer;
+            color: var(--text2);
+            transition: 0.2s;
+            font-size: 10px;
+            border: none;
+            background: none;
+            font-weight: 500;
+            letter-spacing: 0.1px;
+        }
+        .nav-item.active {
+            color: var(--accent);
+        }
+        .nav-item .nav-icon {
+            font-size: 20px;
+        }
+
+        /* Status bar */
+        .status-bar {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            background: var(--surface2);
+            flex-wrap: wrap;
+        }
+        .status-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--accent2);
+            flex-shrink: 0;
+        }
+        .status-dot.err {
+            background: #f44336;
+        }
+
+        /* Info boxes */
+        .info-box {
+            background: #1c1c2e;
+            border: 0.5px solid #2c2c3e;
+            border-radius: 12px;
+            padding: 12px 14px;
+            margin: 8px 0;
+            font-size: 12px;
+            color: #aab;
+            line-height: 1.4;
+        }
+        .info-box strong {
+            color: #ccd;
+        }
+
+        .code-block {
+            background: #0a0a0a;
+            border: 0.5px solid #2c2c2e;
+            border-radius: 10px;
+            padding: 10px 12px;
+            font-family: 'SF Mono', 'Menlo', 'Courier New', monospace;
+            font-size: 11px;
+            color: #30d158;
+            word-break: break-all;
+            margin: 6px 0;
+            overflow-x: auto;
+            -webkit-user-select: text;
+            user-select: text;
+            line-height: 1.5;
+        }
+
+        /* Results */
+        .results {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .result-item {
+            display: flex;
+            gap: 8px;
+            padding: 8px;
+            background: var(--surface2);
+            border-radius: 12px;
+            cursor: pointer;
+            border: 0.5px solid transparent;
+        }
+        .result-item:active {
+            border-color: var(--accent);
+        }
+        .result-thumb {
+            width: 110px;
+            min-width: 110px;
+            height: 62px;
+            background: #000;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .result-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .result-info {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .result-title {
+            font-weight: 600;
+            font-size: 13px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            line-height: 1.3;
+        }
+        .result-channel {
+            font-size: 11px;
+            color: var(--text2);
+        }
+        .result-meta {
+            font-size: 10px;
+            color: #777;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            top: calc(20px + var(--safe-top));
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--accent2);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-weight: 600;
+            z-index: 200;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+            font-size: 13px;
+            letter-spacing: -0.1px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+        }
+        .toast.show {
+            opacity: 1;
+        }
+        .toast.err {
+            background: #f44336;
+        }
+
+        /* Page system */
+        .page {
+            display: none;
+        }
+        .page.active {
+            display: block;
+        }
+
+        /* Select */
+        select {
+            padding: 11px 12px;
+            border-radius: 12px;
+            background: var(--surface2);
+            color: var(--text);
+            border: 0.5px solid var(--border);
+            font-size: 14px;
+            width: 100%;
+            margin: 4px 0;
+            -webkit-appearance: none;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='%23999' d='M5 7L1 3h8z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 30px;
+        }
+
+        .quick-actions {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin: 8px 0;
+        }
+
+        .divider {
+            border: none;
+            border-top: 0.5px solid var(--border);
+            margin: 10px 0;
+        }
+
+        a {
+            color: var(--accent3);
+            text-decoration: none;
+        }
+
+        /* Haptic-like animation */
+        @keyframes tapPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(0.95); }
+            100% { transform: scale(1); }
+        }
+
+        /* iOS specific */
+        input[type="text"] {
+            -webkit-appearance: none;
+            border-radius: 12px;
+        }
+
+        /* Scrollbar hide */
+        ::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <!-- Main container -->
+    <div class="container" id="mainContainer">
+        <!-- Header -->
+        <div class="header">
+            <div class="logo">
+                <div class="logo-icon">▶</div>
+                <h1>You<span>Tube</span></h1>
+            </div>
+            <p class="subtitle">Proxy для iOS • Обход блокировки</p>
+            <span class="ios-badge">🍏 iOS / iPadOS</span>
+        </div>
+
+        <!-- PAGE: Watch -->
+        <div class="page active" id="page-watch">
+            <div class="card">
+                <div class="input-group">
+                    <input type="text" id="videoInput" placeholder="Ссылка или ID видео..." autocomplete="off" autocorrect="off" autocapitalize="none">
+                    <button class="btn btn-primary" onclick="loadVideo()" aria-label="Смотреть">▶</button>
+                </div>
+                <div style="margin-top:6px;font-size:11px;color:var(--text2);">
+                    Пример: <code style="color:var(--accent3);cursor:pointer;" onclick="document.getElementById('videoInput').value='dQw4w9WgXcQ';loadVideo();">dQw4w9WgXcQ</code>
+                </div>
+                <select id="watchMethod" onchange="loadVideo()" style="margin-top:10px;">
+                    <option value="auto">🤖 Авто (Invidious → YouTube)</option>
+                    <option value="invidious">🔄 Invidious (yewtu.be)</option>
+                    <option value="piped">🎵 Piped (piped.video)</option>
+                    <option value="youtube_embed">📺 YouTube Embed (прямой)</option>
+                    <option value="google_translate">🌐 Google Translate (прокси)</option>
+                    <option value="nocookie">🔒 YouTube NoCookie</option>
+                </select>
+                <div id="playerContainer" style="margin-top:10px;"></div>
+                <div class="btn-row" style="margin-top:8px;" id="playerActions" hidden>
+                    <button class="btn btn-sm btn-secondary" onclick="copyCurrentLink()">📋 Копировать</button>
+                    <button class="btn btn-sm btn-secondary" onclick="shareCurrentVideo()">📤 Поделиться</button>
+                    <button class="btn btn-sm btn-secondary" onclick="openOriginal()">🔗 Оригинал</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- PAGE: Search -->
+        <div class="page" id="page-search">
+            <div class="card">
+                <div class="input-group">
+                    <input type="text" id="searchInput" placeholder="Поиск видео..." autocomplete="off" autocorrect="off">
+                    <button class="btn btn-primary" onclick="searchVideos()" aria-label="Поиск">🔍</button>
+                </div>
+                <div id="searchResults" class="results" style="margin-top:10px;"></div>
+            </div>
+        </div>
+
+        <!-- PAGE: Methods -->
+        <div class="page" id="page-methods">
+            <div class="card">
+                <div class="section-title">🔄 Альтернативные фронтенды</div>
+                <div class="methods-grid">
+                    <div class="method-card" onclick="openMethod('invidious')"><div class="icon">🔄</div><div class="name">Invidious</div><div class="desc">yewtu.be</div></div>
+                    <div class="method-card" onclick="openMethod('piped')"><div class="icon">🎵</div><div class="name">Piped</div><div class="desc">piped.video</div></div>
+                    <div class="method-card" onclick="openMethod('cloudtube')"><div class="icon">☁️</div><div class="name">CloudTube</div><div class="desc">Минимализм</div></div>
+                    <div class="method-card" onclick="openMethod('translate')"><div class="icon">🌐</div><div class="name">Translate</div><div class="desc">Прокси Google</div></div>
+                </div>
+
+                <div class="section-title" style="border-bottom-color:var(--accent3);">🌍 VPN / Прокси для iOS</div>
+                <div class="methods-grid">
+                    <div class="method-card" onclick="openMethod('vpn')"><div class="icon">🔐</div><div class="name">VPN приложения</div><div class="desc">App Store</div></div>
+                    <div class="method-card" onclick="openMethod('vps')"><div class="icon">🖥️</div><div class="name">VPS SSH</div><div class="desc">Туннель</div></div>
+                    <div class="method-card" onclick="openMethod('proxy_ios')"><div class="icon">🔗</div><div class="name">Прокси iOS</div><div class="desc">Настройка</div></div>
+                    <div class="method-card" onclick="openMethod('proxy_list')"><div class="icon">📋</div><div class="name">Списки</div><div class="desc">Бесплатные</div></div>
+                </div>
+
+                <div class="section-title" style="border-bottom-color:var(--accent4);">🛡️ DPI / DNS</div>
+                <div class="methods-grid">
+                    <div class="method-card" onclick="openMethod('dns')"><div class="icon">🔧</div><div class="name">Смена DNS</div><div class="desc">1.1.1.1</div></div>
+                    <div class="method-card" onclick="openMethod('tor')"><div class="icon">🧅</div><div class="name">Onion Browser</div><div class="desc">Tor для iOS</div></div>
+                    <div class="method-card" onclick="openMethod('antizapret')"><div class="icon">🛡️</div><div class="name">АнтиЗапрет</div><div class="desc">Обход DPI</div></div>
+                    <div class="method-card" onclick="openMethod('goodbyedpi_ios')"><div class="icon">🛡️</div><div class="name">GoodbyeDPI</div><div class="desc">Инструкция</div></div>
+                </div>
+
+                <div class="section-title" style="border-bottom-color:var(--accent2);">📱 Приложения</div>
+                <div class="methods-grid">
+                    <div class="method-card" onclick="openMethod('yattee')"><div class="icon">📺</div><div class="name">Yattee</div><div class="desc">YouTube клиент</div></div>
+                    <div class="method-card" onclick="openMethod('brave_ios')"><div class="icon">🦁</div><div class="name">Brave</div><div class="desc">Браузер</div></div>
+                    <div class="method-card" onclick="openMethod('opera')"><div class="icon">🌐</div><div class="name">Opera VPN</div><div class="desc">Встроенный VPN</div></div>
+                    <div class="method-card" onclick="openMethod('sideload')"><div class="icon">🔓</div><div class="name">uYou+</div><div class="desc">YouTube мод</div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PAGE: VPN/Proxy -->
+        <div class="page" id="page-vpn">
+            <div class="card">
+                <div class="section-title" style="border-bottom-color:var(--accent3);">🔐 VPN из App Store</div>
+                <div class="info-box">
+                    <strong>Бесплатные VPN для iOS:</strong>
+                </div>
+                <div class="btn-row">
+                    <button class="btn btn-sm btn-blue btn-block" onclick="openApp('protonvpn')">🔐 ProtonVPN (бесплатный)</button>
+                </div>
+                <div class="btn-row">
+                    <button class="btn btn-sm btn-secondary btn-block" onclick="openApp('windscribe')">🌬️ Windscribe (10 ГБ/мес)</button>
+                </div>
+                <div class="btn-row">
+                    <button class="btn btn-sm btn-secondary btn-block" onclick="openApp('warp')">☁️ Cloudflare WARP (1.1.1.1)</button>
+                </div>
+                <div class="btn-row">
+                    <button class="btn btn-sm btn-secondary btn-block" onclick="openApp('hide_me')">🛡️ Hide.me (10 ГБ/мес)</button>
+                </div>
+                <div class="btn-row">
+                    <button class="btn btn-sm btn-secondary btn-block" onclick="openApp('tunnelbear')">🐻 TunnelBear (500 МБ/мес)</button>
+                </div>
+
+                <div class="divider"></div>
+
+                <div class="section-title" style="border-bottom-color:var(--accent);">🔗 Прокси на iOS</div>
+                <div class="info-box">
+                    <strong>Как настроить прокси на iPhone/iPad:</strong><br>
+                    1. <strong>Настройки</strong> → Wi-Fi<br>
+                    2. Нажмите <strong>(i)</strong> рядом с сетью<br>
+                    3. Прокси → <strong>Вручную</strong><br>
+                    4. Введите сервер и порт
+                </div>
+                <button class="btn btn-sm btn-blue btn-block" onclick="openApp('proxy_list')">📋 Списки бесплатных прокси</button>
+
+                <div class="divider"></div>
+
+                <div class="section-title" style="border-bottom-color:var(--accent2);">🖥️ VPS SSH Туннель</div>
+                <div class="info-box">
+                    <strong>Приложения SSH для iOS:</strong><br>
+                    • <strong>Termius</strong> (бесплатный)<br>
+                    • <strong>Shelly</strong> (SSH клиент)<br>
+                    • <strong>WebSSH</strong>
+                </div>
+                <button class="btn btn-sm btn-green btn-block" onclick="openApp('termius')">📲 Termius (App Store)</button>
+                <div class="code-block" style="margin-top:8px;">
+ssh -D 1080 -N user@ваш_vps_ip
+# Затем прокси SOCKS5: 127.0.0.1:1080
+                </div>
+            </div>
+        </div>
+
+        <!-- PAGE: DNS/DPI -->
+        <div class="page" id="page-dns">
+            <div class="card">
+                <div class="section-title" style="border-bottom-color:var(--accent4);">🔧 Смена DNS на iOS</div>
+                <div class="info-box">
+                    <strong>Публичные DNS (могут обходить блокировки):</strong><br><br>
+                    • <strong>Cloudflare:</strong> 1.1.1.1 / 1.0.0.1<br>
+                    • <strong>Google:</strong> 8.8.8.8 / 8.8.4.4<br>
+                    • <strong>AdGuard:</strong> 94.140.14.14
+                </div>
+                <div class="info-box">
+                    <strong>Как сменить DNS на iPhone/iPad:</strong><br>
+                    1. <strong>Настройки</strong> → Wi-Fi<br>
+                    2. Нажмите <strong>(i)</strong> рядом с сетью<br>
+                    3. Прокрутите до <strong>DNS</strong> → Настроить DNS<br>
+                    4. Выберите <strong>Вручную</strong><br>
+                    5. Удалите старые серверы<br>
+                    6. Добавьте: <strong>1.1.1.1</strong> и <strong>1.0.0.1</strong>
+                </div>
+                <button class="btn btn-sm btn-orange btn-block" onclick="openApp('dns_profile')">📥 Скачать DNS-профиль Cloudflare</button>
+
+                <div class="divider"></div>
+
+                <div class="section-title" style="border-bottom-color:var(--accent);">🛡️ Обход DPI на iOS</div>
+                <div class="info-box">
+                    <strong>АнтиЗапрет</strong> — приложение для обхода DPI-блокировок.
+                    Работает через VPN-профиль на устройстве.<br>
+                    <strong>Скачать:</strong> App Store или сайт разработчика.
+                </div>
+                <button class="btn btn-sm btn-primary btn-block" onclick="openApp('antizapret')">🛡️ АнтиЗапрет (App Store)</button>
+
+                <div class="info-box" style="margin-top:8px;">
+                    <strong>🧅 Onion Browser (Tor для iOS):</strong><br>
+                    Бесплатный браузер с маршрутизацией через Tor.<br>
+                    Полная анонимность + обход блокировок.
+                </div>
+                <button class="btn btn-sm btn-secondary btn-block" onclick="openApp('onion')">🧅 Onion Browser (App Store)</button>
+            </div>
+        </div>
+
+        <!-- PAGE: Download -->
+        <div class="page" id="page-download">
+            <div class="card">
+                <div class="input-group">
+                    <input type="text" id="downloadInput" placeholder="Ссылка на видео..." autocomplete="off" autocorrect="off">
+                    <button class="btn btn-primary" onclick="downloadVideo()" aria-label="Скачать">⬇</button>
+                </div>
+                <div class="methods-grid" style="margin-top:12px;">
+                    <div class="method-card" onclick="openDownloader('y2mate')"><div class="icon">📥</div><div class="name">Y2Mate</div><div class="desc">MP4/MP3</div></div>
+                    <div class="method-card" onclick="openDownloader('savefrom')"><div class="icon">💾</div><div class="name">SaveFrom</div><div class="desc">Все форматы</div></div>
+                    <div class="method-card" onclick="openDownloader('9convert')"><div class="icon">🎵</div><div class="name">9Convert</div><div class="desc">MP3/MP4</div></div>
+                    <div class="method-card" onclick="openDownloader('yt1s')"><div class="icon">🎬</div><div class="name">YT1s</div><div class="desc">HD</div></div>
+                </div>
+                <p style="font-size:10px;color:var(--text2);margin-top:8px;text-align:center;">
+                    ⚠️ На iOS скачанные файлы открываются через «Файлы» или Safari
+                </p>
+            </div>
+        </div>
+
+        <!-- Status -->
+        <div class="status-bar" style="margin-top:auto;">
+            <span class="status-dot" id="statusDot"></span>
+            <span id="statusText">Готов к работе</span>
+            <span style="margin-left:auto;font-size:10px;color:var(--text2);" id="methodLabel"></span>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <button class="nav-item active" data-page="watch" onclick="switchPage('watch')">
+            <span class="nav-icon">▶</span> Смотреть
+        </button>
+        <button class="nav-item" data-page="search" onclick="switchPage('search')">
+            <span class="nav-icon">🔍</span> Поиск
+        </button>
+        <button class="nav-item" data-page="methods" onclick="switchPage('methods')">
+            <span class="nav-icon">🔄</span> Методы
+        </button>
+        <button class="nav-item" data-page="vpn" onclick="switchPage('vpn')">
+            <span class="nav-icon">🔐</span> VPN
+        </button>
+        <button class="nav-item" data-page="dns" onclick="switchPage('dns')">
+            <span class="nav-icon">🔧</span> DNS
+        </button>
+    </nav>
+
+    <script>
+        // ============ КОНФИГУРАЦИЯ ============
+        const INVIDIOUS_INSTANCES = [
+            'https://yewtu.be',
+            'https://invidious.fdn.fr',
+            'https://vid.puffyan.us',
+            'https://invidious.snopyta.org',
+            'https://invidious.kavin.rocks',
+            'https://inv.riverside.rocks',
+            'https://yt.artemislena.eu',
+            'https://invidious.esmailelbob.xyz'
+        ];
+        const PIPED_INSTANCES = [
+            'https://piped.video',
+            'https://piped.kavin.rocks',
+            'https://piped.syncpundit.io'
+        ];
+        const CORS_PROXIES = [
+            'https://api.allorigins.win/raw?url=',
+            'https://corsproxy.io/?',
+            'https://api.codetabs.com/v1/proxy?quest='
+        ];
+
+        let currentVideoId = 'dQw4w9WgXcQ';
+        let currentPage = 'watch';
+
+        // ============ ИНИЦИАЛИЗАЦИЯ ============
+        document.addEventListener('DOMContentLoaded', () => {
+            // Enter в полях ввода
+            document.getElementById('videoInput').addEventListener('keydown', e => {
+                if (e.key === 'Enter') loadVideo();
+            });
+            document.getElementById('searchInput').addEventListener('keydown', e => {
+                if (e.key === 'Enter') searchVideos();
+            });
+            document.getElementById('downloadInput').addEventListener('keydown', e => {
+                if (e.key === 'Enter') downloadVideo();
+            });
+
+            // Изменение метода
+            document.getElementById('watchMethod').addEventListener('change', () => loadVideo());
+
+            // Параметры URL
+            const params = new URLSearchParams(location.search);
+            const v = params.get('v') || params.get('id');
+            if (v) {
+                document.getElementById('videoInput').value = v;
+                loadVideo();
+            }
+
+            // История
+            window.addEventListener('popstate', (e) => {
+                if (e.state && e.state.page) switchPage(e.state.page, false);
+            });
+
+            // Свайпы
+            let touchStartX = 0;
+            let touchStartY = 0;
+            document.addEventListener('touchstart', e => {
+                touchStartX = e.touches[0].clientX;
+                touchStartY = e.touches[0].clientY;
+            }, { passive: true });
+            document.addEventListener('touchend', e => {
+                const diffX = e.changedTouches[0].clientX - touchStartX;
+                const diffY = e.changedTouches[0].clientY - touchStartY;
+                if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 60) {
+                    const pages = ['watch', 'search', 'methods', 'vpn', 'dns'];
+                    const idx = pages.indexOf(currentPage);
+                    if (diffX < -40 && idx < pages.length - 1) switchPage(pages[idx + 1]);
+                    if (diffX > 40 && idx > 0) switchPage(pages[idx - 1]);
+                }
+            });
+
+            toast('✅ Готов к работе');
+        });
+
+        // ============ НАВИГАЦИЯ ============
+        function switchPage(page, pushState = true) {
+            currentPage = page;
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+
+            const pageEl = document.getElementById(`page-${page}`);
+            const navEl = document.querySelector(`[data-page="${page}"]`);
+
+            if (pageEl) pageEl.classList.add('active');
+            if (navEl) navEl.classList.add('active');
+
+            if (pushState) {
+                history.pushState({ page }, '', `#${page}`);
+            }
+
+            document.getElementById('mainContainer').scrollTop = 0;
+        }
+
+        // ============ ИЗВЛЕЧЕНИЕ ID ============
+        function extractVideoId(input) {
+            if (!input) return null;
+            input = input.trim();
+            if (/^[a-zA-Z0-9_-]{11}$/.test(input)) return input;
+            const sm = input.match(/youtu\.be\/([a-zA-Z0-9_-]{11})/);
+            if (sm) return sm[1];
+            const shm = input.match(/shorts\/([a-zA-Z0-9_-]{11})/);
+            if (shm) return shm[1];
+            const em = input.match(/embed\/([a-zA-Z0-9_-]{11})/);
+            if (em) return em[1];
+            try {
+                const u = new URL(input.startsWith('http') ? input : 'https://' + input);
+                const v = u.searchParams.get('v');
+                if (v && /^[a-zA-Z0-9_-]{11}$/.test(v)) return v;
+            } catch {}
+            return null;
+        }
+
+        // ============ ЗАГРУЗКА ВИДЕО ============
+        function loadVideo() {
+            const vid = extractVideoId(document.getElementById('videoInput').value);
+            const method = document.getElementById('watchMethod').value;
+
+            if (!vid) {
+                toast('❌ Не удалось распознать ссылку', true);
+                return;
+            }
+
+            currentVideoId = vid;
+            const container = document.getElementById('playerContainer');
+            const actions = document.getElementById('playerActions');
+            let url, methodName;
+
+            switch (method) {
+                case 'invidious':
+                    url = `${getRand(INVIDIOUS_INSTANCES)}/embed/${vid}`;
+                    methodName = 'Invidious';
+                    break;
+                case 'piped':
+                    url = `${getRand(PIPED_INSTANCES)}/embed/${vid}`;
+                    methodName = 'Piped';
+                    break;
+                case 'youtube_embed':
+                    url = `https://www.youtube.com/embed/${vid}?autoplay=0&playsinline=1`;
+                    methodName = 'YouTube';
+                    break;
+                case 'google_translate':
+                    url = `https://translate.google.com/translate?sl=en&tl=ru&u=https://www.youtube.com/embed/${vid}`;
+                    methodName = 'Translate';
+                    break;
+                case 'nocookie':
+                    url = `https://www.youtube-nocookie.com/embed/${vid}?playsinline=1`;
+                    methodName = 'NoCookie';
+                    break;
+                default:
+                    url = `${getRand(INVIDIOUS_INSTANCES)}/embed/${vid}`;
+                    methodName = 'Invidious';
+            }
+
+            container.innerHTML = `
+                <div class="player-wrapper">
+                    <iframe src="${url}" 
+                        allow="autoplay; encrypted-media; picture-in-picture; fullscreen" 
+                        allowfullscreen 
+                        loading="lazy"
+                        playsinline
+                        webkit-playsinline
+                        onerror="this.onerror=null;this.src='https://www.youtube.com/embed/${vid}?playsinline=1';document.getElementById('methodLabel').textContent='YouTube (fallback)';">
+                    </iframe>
+                </div>
+            `;
+            actions.hidden = false;
+            document.getElementById('methodLabel').textContent = methodName;
+            setStatus(true, '✅ Видео загружено');
+            toast('▶ Воспроизведение...');
+        }
+
+        // ============ ПОИСК ============
+        async function searchVideos() {
+            const q = document.getElementById('searchInput').value.trim();
+            if (!q) return;
+            const d = document.getElementById('searchResults');
+            d.innerHTML = '<p style="text-align:center;padding:30px;color:var(--text2);">🔍 Ищем...</p>';
+            switchPage('search', true);
+            try {
+                const v = await searchInvidious(q);
+                displayResults(v);
+                setStatus(true, `✅ Найдено: ${v.length}`);
+            } catch (e) {
+                console.error('Search error:', e);
+                d.innerHTML = '<p style="text-align:center;padding:30px;color:#f44336;">❌ Ошибка поиска.<br>Попробуйте другой метод.</p>';
+                setStatus(false, 'Ошибка поиска');
+            }
+        }
+
+        async function searchInvidious(q) {
+            const api = `${getRand(INVIDIOUS_INSTANCES)}/api/v1/search?q=${encodeURIComponent(q)}&type=video&limit=20`;
+            let lastError;
+            for (const p of CORS_PROXIES) {
+                try {
+                    const r = await fetch(p + encodeURIComponent(api), {
+                        signal: AbortSignal.timeout(10000)
+                    });
+                    if (r.ok) {
+                        const d = await r.json();
+                        if (Array.isArray(d)) {
+                            return d.slice(0, 20).map(i => ({
+                                id: i.videoId,
+                                title: i.title || 'Без названия',
+                                channel: i.author || 'Неизвестный',
+                                views: i.viewCountText || '',
+                                duration: i.lengthSeconds ? fmtDur(i.lengthSeconds) : '',
+                                thumbnail: i.videoThumbnails?.[i.videoThumbnails.length - 1]?.url ||
+                                    `https://i.ytimg.com/vi/${i.videoId}/hqdefault.jpg`
+                            }));
+                        }
+                    }
+                } catch (e) {
+                    lastError = e;
+                }
+            }
+            throw lastError || new Error('Все прокси недоступны');
+        }
+
+        function displayResults(v) {
+            const d = document.getElementById('searchResults');
+            if (!v.length) {
+                d.innerHTML = '<p style="text-align:center;color:var(--text2);padding:30px;">Ничего не найдено</p>';
+                return;
+            }
+            d.innerHTML = v.map(v => `
+                <div class="result-item" onclick="playFromSearch('${v.id}')">
+                    <div class="result-thumb">
+                        <img src="${v.thumbnail}" loading="lazy" onerror="this.style.display='none'">
+                    </div>
+                    <div class="result-info">
+                        <div class="result-title">${esc(v.title)}</div>
+                        <div class="result-channel">${esc(v.channel)}</div>
+                        <div class="result-meta">${v.views ? '👁 ' + v.views : ''} ${v.duration ? '• ⏱ ' + v.duration : ''}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function playFromSearch(id) {
+            document.getElementById('videoInput').value = id;
+            switchPage('watch', true);
+            loadVideo();
+        }
+
+        // ============ МЕТОДЫ ============
+        function openMethod(method) {
+            const vid = currentVideoId || 'dQw4w9WgXcQ';
+            const urls = {
+                invidious: `${getRand(INVIDIOUS_INSTANCES)}/watch?v=${vid}`,
+                piped: `${getRand(PIPED_INSTANCES)}/watch?v=${vid}`,
+                cloudtube: `https://tube.cadence.moe/watch?v=${vid}`,
+                translate: `https://translate.google.com/translate?sl=en&tl=ru&u=https://www.youtube.com/watch?v=${vid}`,
+                vpn: '#vpn',
+                vps: '#vpn',
+                proxy_ios: '#vpn',
+                proxy_list: 'https://free-proxy-list.net',
+                dns: '#dns',
+                tor: 'https://apps.apple.com/app/onion-browser/id519296448',
+                antizapret: 'https://apps.apple.com/ru/app/%D0%B0%D0%BD%D1%82%D0%B8%D0%B7%D0%B0%D0%BF%D1%80%D0%B5%D1%82/id1526865492',
+                goodbyedpi_ios: 'https://github.com/ValdikSS/GoodbyeDPI',
+                yattee: 'https://apps.apple.com/app/yattee/id1595136629',
+                brave_ios: 'https://apps.apple.com/app/brave-private-web-browser/id1052879175',
+                opera: 'https://apps.apple.com/app/opera-browser-with-vpn/id1411869974',
+                sideload: 'https://github.com/qnblackcat/uYouPlus',
+            };
+
+            if (method === 'vpn' || method === 'vps' || method === 'proxy_ios') {
+                switchPage('vpn', true);
+                return;
+            }
+            if (method === 'dns') {
+                switchPage('dns', true);
+                return;
+            }
+
+            const url = urls[method];
+            if (url && url !== '#vpn' && url !== '#dns') {
+                window.open(url, '_blank');
+            }
+            toast(`🔄 Открыто: ${method}`);
+        }
+
+        // ============ VPN / ПРИЛОЖЕНИЯ ============
+        function openApp(app) {
+            const apps = {
+                protonvpn: 'https://apps.apple.com/app/proton-vpn/id979659905',
+                windscribe: 'https://apps.apple.com/app/windscribe-vpn/id1129435228',
+                warp: 'https://apps.apple.com/app/1-1-1-1-faster-internet/id1423538627',
+                hide_me: 'https://apps.apple.com/app/hide-me-vpn/id946133277',
+                tunnelbear: 'https://apps.apple.com/app/tunnelbear-vpn/id564842283',
+                termius: 'https://apps.apple.com/app/termius-ssh-client/id549039908',
+                proxy_list: 'https://free-proxy-list.net',
+                dns_profile: 'https://1.1.1.1/dns',
+                antizapret: 'https://apps.apple.com/ru/app/%D0%B0%D0%BD%D1%82%D0%B8%D0%B7%D0%B0%D0%BF%D1%80%D0%B5%D1%82/id1526865492',
+                onion: 'https://apps.apple.com/app/onion-browser/id519296448',
+            };
+
+            const url = apps[app];
+            if (url) {
+                window.open(url, '_blank');
+                toast('📱 Открываю App Store...');
+            }
+        }
+
+        // ============ СКАЧИВАНИЕ ============
+        function downloadVideo() {
+            const vid = extractVideoId(document.getElementById('downloadInput').value) || currentVideoId;
+            if (!vid) {
+                toast('❌ Неверная ссылка', true);
+                return;
+            }
+            openDownloader('y2mate', vid);
+        }
+
+        function openDownloader(service, vid) {
+            const v = vid || currentVideoId;
+            const urls = {
+                y2mate: `https://www.y2mate.com/youtube/${v}`,
+                savefrom: `https://en.savefrom.net/1-youtube-downloader/?url=https://www.youtube.com/watch?v=${v}`,
+                '9convert': `https://9convert.com/en/youtube-to-mp4/${v}`,
+                yt1s: `https://yt1s.com/youtube-to-mp4?url=https://www.youtube.com/watch?v=${v}`,
+            };
+            window.open(urls[service] || urls.y2mate, '_blank');
+            toast('⬇ Открыт сервис');
+        }
+
+        // ============ ДЕЙСТВИЯ ============
+        function copyCurrentLink() {
+            const link = `https://www.youtube.com/watch?v=${currentVideoId}`;
+            navigator.clipboard.writeText(link).then(
+                () => toast('📋 Скопировано!'),
+                () => {
+                    const input = document.createElement('input');
+                    input.value = link;
+                    document.body.appendChild(input);
+                    input.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(input);
+                    toast('📋 Скопировано!');
+                }
+            );
+        }
+
+        function shareCurrentVideo() {
+            const link = `https://www.youtube.com/watch?v=${currentVideoId}`;
+            if (navigator.share) {
+                navigator.share({
+                    title: 'YouTube видео',
+                    url: link
+                }).catch(() => {});
+            } else {
+                copyCurrentLink();
+            }
+        }
+
+        function openOriginal() {
+            window.open(`https://www.youtube.com/watch?v=${currentVideoId}`, '_blank');
+        }
+
+        // ============ ВСПОМОГАТЕЛЬНЫЕ ============
+        function getRand(arr) {
+            return arr[Math.floor(Math.random() * arr.length)];
+        }
+
+        function setStatus(ok, msg) {
+            const dot = document.getElementById('statusDot');
+            const text = document.getElementById('statusText');
+            dot.className = 'status-dot' + (ok ? '' : ' err');
+            text.textContent = msg;
+        }
+
+        function toast(msg, isError = false) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = 'toast' + (isError ? ' err' : '');
+            t.classList.add('show');
+            clearTimeout(t._timeout);
+            t._timeout = setTimeout(() => t.classList.remove('show'), 2200);
+        }
+
+        function fmtDur(s) {
+            if (!s) return '';
+            s = parseInt(s);
+            const h = Math.floor(s / 3600),
+                m = Math.floor((s % 3600) / 60),
+                sec = s % 60;
+            return h > 0 ?
+                `${h}:${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}` :
+                `${m}:${String(sec).padStart(2, '0')}`;
+        }
+
+        function esc(s) {
+            const d = document.createElement('div');
+            d.textContent = s || '';
+            return d.innerHTML;
+        }
+
+        // ============ PWA / URL ============
+        window.addEventListener('load', () => {
+            const hash = location.hash.replace('#', '');
+            if (hash && ['watch', 'search', 'methods', 'vpn', 'dns', 'download'].includes(hash)) {
+                switchPage(hash, false);
+            }
+        });
+
+        // Предотвращение масштабирования двойным тапом
+        document.addEventListener('dblclick', function(e) {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+            e.preventDefault();
+        }, { passive: false });
+    </script>
+</body>
+</html>
