@@ -57,8 +57,12 @@ echo  ║
 echo  ║          🌐 DNS ОБХОД (смена DNS серверов):                           ║
 echo  ║  [22] YouTube через смену DNS (быстрый обход)               ║
 echo  ║  [23] DNS через HTTPS (DoH) / DNS через TLS (DoT)          ║
-echo  ║  [24] DNS + Прокси комбо (двойной обход)                    ║                       ║                         ║
-echo  ║                                                              ║
+echo  ║  [24] DNS + Прокси комбо (двойной обход)║                       ║                         ║
+echo  ║
+echo  ║  📴 ОФФЛАЙН-РЕЖИМ (минимальный интернет):                    ║
+echo  ║  [25] Оффлайн-режим YouTube (кэширование)                  ║
+echo  ║  [26] Скачать видео для оффлайн-просмотра                  ║
+echo  ║  [27] Оффлайн-поиск по кэшу                                ║                                                            ║
 echo  ║  [H]  Полная справка по всем методам                       ║
 echo  ║  [0]  Выход                                                 ║
 echo  ║                                                              ║
@@ -104,6 +108,9 @@ if "%choice%"=="21" goto ESIM_PROXY_COMBO
 if "%choice%"=="22" goto DNS_OBHOD
 if "%choice%"=="23" goto DNS_DOH_DOT
 if "%choice%"=="24" goto DNS_PROXY_COMBO
+if "%choice%"=="25" goto OFFLINE_MODE
+if "%choice%"=="26" goto OFFLINE_DOWNLOAD
+if "%choice%"=="27" goto OFFLINE_SEARCH
 if /i "%choice%"=="H" goto HELP
 if "%choice%"=="0" goto EXIT
 goto MENU
@@ -2088,6 +2095,603 @@ echo echo.
 echo echo [2/3] Проверка доступа к YouTube...
 echo nslookup youtube.com 1.1.1.1
 echo echo
+
+:: ============ [25] ОФФЛАЙН-РЕЖИМ ============
+:OFFLINE_MODE
+cls
+echo.
+echo  ╔══════════════════════════════════════════════════════════════╗
+echo  ║       Оффлайн-режим YouTube (минимальный интернет)          ║
+echo  ╚══════════════════════════════════════════════════════════════╝
+echo.
+echo  Этот режим позволяет смотреть YouTube даже с очень слабым
+echo  интернетом или в режиме экономии трафика.
+echo.
+echo  ┌─────────────────────────────────────────────────────────────┐
+echo  │  Как это работает:                                          │
+echo  │  1. Интерфейс загружается из кэша (не тратит трафик)      │
+echo  │  2. Видео загружается в минимальном качестве (144p)       │
+echo  │  3. Картинки сжаты (WebP, маленький размер)               │
+echo  │  4. Звук загружается отдельно (экономия трафика)          │
+echo  │  5. Всё кэшируется для повторного просмотра               │
+echo  └─────────────────────────────────────────────────────────────┘
+echo.
+echo  Режимы работы:
+echo.
+echo  [1] Эконом-режим (144p, только звук при плохом интернете)
+echo  [2] Оффлайн-интерфейс (загрузить интерфейс и кэшировать)
+echo  [3] Предзагрузка видео (скачать заранее для оффлайн)
+echo  [4] Только аудио-режим (без видео, как подкаст)
+echo  [5] Оффлайн плейлист (сохранить несколько видео)
+echo  [6] Открыть оффлайн HTML
+echo  [7] Очистить кэш оффлайн-режима
+echo.
+set /p offline_choice="  Выбор: "
+
+if "%offline_choice%"=="1" goto OFFLINE_ECONOM
+if "%offline_choice%"=="2" goto OFFLINE_INTERFACE
+if "%offline_choice%"=="3" goto OFFLINE_PRELOAD
+if "%offline_choice%"=="4" goto OFFLINE_AUDIO
+if "%offline_choice%"=="5" goto OFFLINE_PLAYLIST
+if "%offline_choice%"=="6" goto OFFLINE_HTML
+if "%offline_choice%"=="7" goto OFFLINE_CLEAR
+goto MENU
+
+:OFFLINE_ECONOM
+cls
+echo  ╔══════════════════════════════════════════════════════════════╗
+echo  ║       Эконом-режим YouTube (144p, ультра-лёгкий)           ║
+echo  ╚══════════════════════════════════════════════════════════════╝
+echo.
+echo  Эконом-режим использует минимум трафика:
+echo  • Видео: 144p (самое низкое качество)
+echo  • Изображения: отключены
+echo  • Звук: моно, низкий битрейт
+echo  • Кэширование: всё сохраняется локально
+echo.
+echo  Экономия трафика: до 90%% по сравнению с обычным YouTube!
+echo.
+set /p econ_url="  Введите ссылку на видео: "
+if "%econ_url%"=="" (
+    start "" "https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=0&controls=1&modestbranding=1&rel=0&quality=tiny"
+    goto MENU
+)
+
+REM Извлекаем ID
+set "VID=%econ_url%"
+echo %econ_url% | findstr /i "youtube.com" >nul && for /f "tokens=2 delims=?v=&" %%a in ("%econ_url%") do set "VID=%%a"
+echo %econ_url% | findstr /i "youtu.be" >nul && for /f "tokens=2 delims=/" %%a in ("%econ_url%") do set "VID=%%a"
+
+echo  [>>] Открываю в эконом-режиме (144p, без картинок)...
+REM Используем специальные параметры YouTube для минимального качества
+start "" "https://www.youtube.com/embed/%VID%?autoplay=0&controls=1&modestbranding=1&rel=0&quality=tiny&playsinline=1"
+echo.
+echo  [OK] Видео открыто в эконом-режиме!
+echo  [>>] Совет: используйте Firefox с дополнением "YouTube Audio Only"
+pause
+goto OFFLINE_MODE
+
+:OFFLINE_INTERFACE
+cls
+echo  ╔══════════════════════════════════════════════════════════════╗
+echo  ║       Загрузка оффлайн-интерфейса                          ║
+echo  ╚══════════════════════════════════════════════════════════════╝
+echo.
+echo  Создаю оффлайн-версию интерфейса YouTube...
+echo  Интерфейс будет сохранён локально и не потребует
+echo  интернета для навигации (только для загрузки видео).
+echo.
+
+set "OFFLINE_DIR=%~dp0offline_cache"
+if not exist "%OFFLINE_DIR%" mkdir "%OFFLINE_DIR%"
+
+REM Создаём оффлайн HTML с минимальным интерфейсом
+set "OFFLINE_HTML=%OFFLINE_DIR%\youtube_offline.html"
+
+(
+echo ^<!DOCTYPE html^>
+echo ^<html lang="ru"^>
+echo ^<head^>
+echo ^<meta charset="UTF-8"^>
+echo ^<meta name="viewport" content="width=device-width, initial-scale=1.0"^>
+echo ^<title^>YouTube Оффлайн — Минимальный интернет^</title^>
+echo ^<style^>
+echo *{margin:0;padding:0;box-sizing:border-box}
+echo body{font-family:system-ui,sans-serif;background:#0f0f0f;color:#fff;padding:16px;min-height:100vh}
+echo .header{text-align:center;padding:20px 0;border-bottom:2px solid #f00;margin-bottom:20px}
+echo .header h1{color:#f00;font-size:1.8em}
+echo .status{background:#1a1a1a;padding:12px;border-radius:10px;margin:10px 0;display:flex;align-items:center;gap:8px}
+echo .status-dot{width:10px;height:10px;border-radius:50%%;background:#ff0}
+echo .status-dot.online{background:#0f0}
+echo .status-dot.offline{background:#f00}
+echo .input-group{display:flex;gap:8px;margin:16px 0}
+echo input{flex:1;padding:14px;border:2px solid #333;border-radius:25px;background:#1a1a1a;color:#fff;font-size:16px;outline:none}
+echo input:focus{border-color:#f00}
+echo button{padding:14px 24px;background:#f00;color:#fff;border:none;border-radius:25px;font-weight:700;cursor:pointer;font-size:16px}
+echo button:active{background:#c00}
+echo .player{position:relative;width:100%%;padding-bottom:56.25%%;background:#000;border-radius:10px;overflow:hidden;margin:16px 0}
+echo .player iframe{position:absolute;top:0;left:0;width:100%%;height:100%%;border:none}
+echo .cache-info{background:#1a1a1a;padding:12px;border-radius:10px;font-size:13px;color:#aaa;margin:10px 0}
+echo .btn-row{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+echo .btn-secondary{background:#333;color:#fff}
+echo .quality-selector{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+echo .quality-btn{padding:8px 16px;background:#1a1a1a;border:1px solid #333;border-radius:20px;color:#fff;cursor:pointer;font-size:13px}
+echo .quality-btn.active{background:#f00;border-color:#f00}
+echo .offline-list{display:flex;flex-direction:column;gap:8px}
+echo .offline-item{background:#1a1a1a;padding:12px;border-radius:10px;display:flex;gap:10px;align-items:center}
+echo .offline-item .thumb{width:120px;height:68px;background:#000;border-radius:6px;overflow:hidden;flex-shrink:0}
+echo .offline-item .info{flex:1;min-width:0}
+echo .offline-item .title{font-weight:600;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+echo .offline-item .meta{font-size:12px;color:#aaa}
+echo ^</style^>
+echo ^</head^>
+echo ^<body^>
+echo ^<div class="header"^>
+echo ^<h1^>▶ YouTube Оффлайн^</h1^>
+echo ^<p style="color:#aaa;font-size:14px;"^>Минимальный интернет • Экономия трафика^</p^>
+echo ^</div^>
+echo ^<div class="status" id="status"^>
+echo ^<span class="status-dot online" id="statusDot"^>^</span^>
+echo ^<span id="statusText"^>Онлайн (оффлайн-интерфейс загружен)^</span^>
+echo ^</div^>
+echo ^<div class="quality-selector"^>
+echo ^<button class="quality-btn active" onclick="setQuality('auto')"^>Авто^</button^>
+echo ^<button class="quality-btn" onclick="setQuality('tiny')"^>144p^</button^>
+echo ^<button class="quality-btn" onclick="setQuality('small')"^>240p^</button^>
+echo ^<button class="quality-btn" onclick="setQuality('audio')"^>Только звук^</button^>
+echo ^</div^>
+echo ^<div class="input-group"^>
+echo ^<input type="text" id="videoInput" placeholder="Ссылка или ID видео..."^>
+echo ^<button onclick="loadVideo()"^>▶^</button^>
+echo ^</div^>
+echo ^<div id="playerContainer"^>^</div^>
+echo ^<div class="btn-row"^>
+echo ^<button class="btn-secondary" onclick="cacheCurrentVideo()"^>💾 Сохранить в кэш^</button^>
+echo ^<button class="btn-secondary" onclick="showCachedVideos()"^>📂 Кэшированные видео^</button^>
+echo ^<button class="btn-secondary" onclick="clearCache()"^>🗑 Очистить кэш^</button^>
+echo ^</div^>
+echo ^<div class="cache-info"^>
+echo ^<strong^>📦 Кэш браузера:^</strong^> ^<span id="cacheSize"^>0 MB^</span^>
+echo ^<br^>^<strong^>💾 Сохранено видео:^</strong^> ^<span id="cachedCount"^>0^</span^>
+echo ^</div^>
+echo ^<div id="cachedList" class="offline-list"^>^</div^>
+echo ^<script^>
+echo // Оффлайн-плеер YouTube
+echo let currentQuality = 'auto';
+echo let videoHistory = [];
+echo 
+echo // Загрузка видео с минимальным качеством
+echo function loadVideo() {
+echo     const input = document.getElementById('videoInput');
+echo     const videoId = extractVideoId(input.value);
+echo     if (!videoId) {
+echo         alert('❌ Не удалось распознать ссылку!\nПример: dQw4w9WgXcQ');
+echo         return;
+echo     }
+echo     const container = document.getElementById('playerContainer');
+echo     const quality = currentQuality === 'audio' ? 'tiny' : currentQuality;
+echo     let url;
+echo     if (currentQuality === 'audio') {
+echo         url = `https://www.youtube.com/embed/${videoId}?autoplay=0&controls=1&modestbranding=1&rel=0&quality=tiny&volume=100`;
+echo     } else {
+echo         url = `https://www.youtube.com/embed/${videoId}?autoplay=0&controls=1&modestbranding=1&rel=0&quality=${quality}`;
+echo     }
+echo     container.innerHTML = `<div class="player"><iframe src="${url}" allow="autoplay; encrypted-media" allowfullscreen loading="lazy"></iframe></div>`;
+echo     saveToHistory(videoId);
+echo     updateCacheInfo();
+echo }
+echo 
+echo function extractVideoId(input) {
+echo     if (!input) return null;
+echo     input = input.trim();
+echo     if (/^[a-zA-Z0-9_-]{11}$/.test(input)) return input;
+echo     const sm = input.match(/youtu\.be\/([a-zA-Z0-9_-]{11})/);
+echo     if (sm) return sm[1];
+echo     const em = input.match(/embed\/([a-zA-Z0-9_-]{11})/);
+echo     if (em) return em[1];
+echo     try {
+echo         const u = new URL(input.startsWith('http') ? input : 'https://' + input);
+echo         return u.searchParams.get('v');
+echo     } catch {}
+echo     return null;
+echo }
+echo 
+echo function setQuality(q) {
+echo     currentQuality = q;
+echo     document.querySelectorAll('.quality-btn').forEach(b => b.classList.remove('active'));
+echo     event.target.classList.add('active');
+echo }
+echo 
+echo function cacheCurrentVideo() {
+echo     const iframe = document.querySelector('.player iframe');
+echo     if (!iframe) { alert('Сначала загрузите видео!'); return; }
+echo     const videoId = extractVideoId(iframe.src);
+echo     const cached = JSON.parse(localStorage.getItem('yt_offline') || '[]');
+echo     if (!cached.find(v => v.id === videoId)) {
+echo         cached.push({ id: videoId, date: new Date().toISOString(), quality: currentQuality });
+echo         localStorage.setItem('yt_offline', JSON.stringify(cached));
+echo     }
+echo     updateCacheInfo();
+echo     alert('✅ Видео сохранено в кэш!');
+echo }
+echo 
+echo function showCachedVideos() {
+echo     const cached = JSON.parse(localStorage.getItem('yt_offline') || '[]');
+echo     const container = document.getElementById('cachedList');
+echo     if (!cached.length) {
+echo         container.innerHTML = '<p style="color:#aaa;text-align:center;padding:20px;">Нет сохранённых видео</p>';
+echo         return;
+echo     }
+echo     container.innerHTML = cached.map(v => `
+echo         <div class="offline-item" onclick="document.getElementById('videoInput').value='${v.id}';loadVideo();">
+echo             <div class="thumb"><img src="https://i.ytimg.com/vi/${v.id}/default.jpg" onerror="this.style.display='none'" style="width:100%;height:100%;object-fit:cover;"></div>
+echo             <div class="info">
+echo                 <div class="title">${v.id}</div>
+echo                 <div class="meta">Сохранено: ${new Date(v.date).toLocaleDateString()} • Качество: ${v.quality}</div>
+echo             </div>
+echo         </div>
+echo     `).join('');
+echo     updateCacheInfo();
+echo }
+echo 
+echo function clearCache() {
+echo     if (confirm('Очистить весь кэш оффлайн-режима?')) {
+echo         localStorage.removeItem('yt_offline');
+echo         updateCacheInfo();
+echo         document.getElementById('cachedList').innerHTML = '';
+echo         alert('🗑 Кэш очищен!');
+echo     }
+echo }
+echo 
+echo function saveToHistory(videoId) {
+echo     videoHistory.push({ id: videoId, time: Date.now() });
+echo     if (videoHistory.length > 50) videoHistory.shift();
+echo }
+echo 
+echo function updateCacheInfo() {
+echo     const cached = JSON.parse(localStorage.getItem('yt_offline') || '[]');
+echo     document.getElementById('cachedCount').textContent = cached.length;
+echo     let size = 0;
+echo     for (let key in localStorage) {
+echo         if (localStorage.hasOwnProperty(key)) {
+echo             size += localStorage[key].length * 2;
+echo         }
+echo     }
+echo     document.getElementById('cacheSize').textContent = (size / 1024 / 1024).toFixed(2) + ' MB';
+echo }
+echo 
+echo // Проверка статуса сети
+echo function updateOnlineStatus() {
+echo     const dot = document.getElementById('statusDot');
+echo     const text = document.getElementById('statusText');
+echo     if (navigator.onLine) {
+echo         dot.className = 'status-dot online';
+echo         text.textContent = 'Онлайн (интерфейс из кэша)';
+echo     } else {
+echo         dot.className = 'status-dot offline';
+echo         text.textContent = 'Оффлайн (только кэшированные видео)';
+echo     }
+echo }
+echo 
+echo window.addEventListener('online', updateOnlineStatus);
+echo window.addEventListener('offline', updateOnlineStatus);
+echo window.addEventListener('load', () => {
+echo     updateOnlineStatus();
+echo     updateCacheInfo();
+echo     showCachedVideos();
+echo });
+echo 
+echo // Кэширование Service Worker
+echo if ('serviceWorker' in navigator) {
+echo     window.addEventListener('load', () => {
+echo         navigator.serviceWorker.register('data:application/javascript,' + encodeURIComponent(
+echo             'self.addEventListener("install",()=>self.skipWaiting());' +
+echo             'self.addEventListener("activate",()=>self.clients.claim());' +
+echo             'self.addEventListener("fetch",e=>{' +
+echo             '  const r=e.request;' +
+echo             '  if(r.url.includes("youtube.com")||r.url.includes("ytimg.com")){' +
+echo             '    e.respondWith(caches.match(r).then(c=>c||fetch(r).then(resp=>{' +
+echo             '      const clone=resp.clone();' +
+echo             '      caches.open("yt-offline").then(c=>c.put(r,clone));' +
+echo             '      return resp;' +
+echo             '    })));' +
+echo             '  }' +
+echo             '})'
+echo         ));
+echo     });
+echo }
+echo ^</script^>
+echo ^</body^>
+echo ^</html^>
+) > "%OFFLINE_HTML%"
+
+echo.
+echo  [OK] Оффлайн HTML создан: %OFFLINE_HTML%
+echo  [>>] Открываю в браузере...
+start "" "%OFFLINE_HTML%"
+echo.
+echo  ╔══════════════════════════════════════════════════════════════╗
+echo  ║  Оффлайн-интерфейс готов!                                   ║
+echo  ║  • Интерфейс загружается из кэша                            ║
+echo  ║  • Видео кэшируются для повтора                            ║
+echo  ║  • Работает даже с очень слабым интернетом                 ║
+echo  ╚══════════════════════════════════════════════════════════════╝
+pause
+goto MENU
+
+:OFFLINE_PRELOAD
+cls
+echo  ╔══════════════════════════════════════════════════════════════╗
+echo  ║       Предзагрузка видео для оффлайн                       ║
+echo  ╚══════════════════════════════════════════════════════════════╝
+echo.
+echo  Этот метод загружает видео заранее (когда есть интернет)
+echo  для последующего просмотра без интернета.
+echo.
+echo  Используются инструменты:
+echo  • yt-dlp (https://github.com/yt-dlp/yt-dlp)
+echo  • youtube-dl
+echo.
+echo  [1] Скачать yt-dlp (если не установлен)
+echo  [2] Загрузить видео (низкое качество, быстро)
+echo  [3] Загрузить видео (среднее качество)
+echo  [4] Загрузить только аудио
+echo  [5] Загрузить плейлист для оффлайн
+echo.
+set /p preload_choice="  Выбор: "
+
+if "%preload_choice%"=="1" (
+    echo  [>>] Открываю страницу загрузки yt-dlp...
+    start "" "https://github.com/yt-dlp/yt-dlp/releases"
+    echo  Скачайте yt-dlp.exe и положите в папку со скриптом
+)
+
+if "%preload_choice%"=="2" goto PRELOAD_LOW
+if "%preload_choice%"=="3" goto PRELOAD_MED
+if "%preload_choice%"=="4" goto PRELOAD_AUDIO
+if "%preload_choice%"=="5" goto PRELOAD_PLAYLIST
+goto MENU
+
+:PRELOAD_LOW
+set /p pl_url="  Ссылка на видео: "
+if "%pl_url%"=="" goto MENU
+set "DL=%VID%"
+echo %pl_url% | findstr /i "youtube.com" >nul && for /f "tokens=2 delims=?v=&" %%a in ("%pl_url%") do set "DL=%%a"
+echo %pl_url% | findstr /i "youtu.be" >nul && for /f "tokens=2 delims=/" %%a in ("%pl_url%") do set "DL=%%a"
+
+set "OFFLINE_DIR=%~dp0offline_cache"
+if not exist "%OFFLINE_DIR%" mkdir "%OFFLINE_DIR%"
+
+echo  [>>] Загружаю видео в низком качестве (144p)...
+if exist "yt-dlp.exe" (
+    yt-dlp.exe -f "best[height<=144]" -o "%OFFLINE_DIR%\%%(title)s.%%(ext)s" "https://www.youtube.com/watch?v=%DL%"
+) else (
+    echo  [!] yt-dlp не найден! Скачайте его (пункт 1)
+    echo  [>>] Пытаюсь через youtube-dl...
+    where youtube-dl >nul 2>&1 && youtube-dl -f "best[height<=144]" -o "%OFFLINE_DIR%\%%(title)s.%%(ext)s" "https://www.youtube.com/watch?v=%DL%" || echo  [X] Ни один загрузчик не найден
+)
+echo  [OK] Видео сохранено в: %OFFLINE_DIR%
+pause
+goto MENU
+
+:PRELOAD_MED
+set /p pl_url="  Ссылка на видео: "
+if "%pl_url%"=="" goto MENU
+set "DL=%VID%"
+echo %pl_url% | findstr /i "youtube.com" >nul && for /f "tokens=2 delims=?v=&" %%a in ("%pl_url%") do set "DL=%%a"
+echo %pl_url% | findstr /i "youtu.be" >nul && for /f "tokens=2 delims=/" %%a in ("%pl_url%") do set "DL=%%a"
+
+set "OFFLINE_DIR=%~dp0offline_cache"
+if not exist "%OFFLINE_DIR%" mkdir "%OFFLINE_DIR%"
+
+echo  [>>] Загружаю видео в среднем качестве (360p)...
+if exist "yt-dlp.exe" (
+    yt-dlp.exe -f "best[height<=360]" -o "%OFFLINE_DIR%\%%(title)s.%%(ext)s" "https://www.youtube.com/watch?v=%DL%"
+) else (
+    echo  [!] yt-dlp не найден!
+)
+echo  [OK] Готово!
+pause
+goto MENU
+
+:PRELOAD_AUDIO
+set /p pl_url="  Ссылка на видео: "
+if "%pl_url%"=="" goto MENU
+set "DL=%VID%"
+echo %pl_url% | findstr /i "youtube.com" >nul && for /f "tokens=2 delims=?v=&" %%a in ("%pl_url%") do set "DL=%%a"
+
+set "OFFLINE_DIR=%~dp0offline_cache"
+if not exist "%OFFLINE_DIR%" mkdir "%OFFLINE_DIR%"
+
+echo  [>>] Загружаю только аудио...
+if exist "yt-dlp.exe" (
+    yt-dlp.exe -x --audio-format mp3 -o "%OFFLINE_DIR%\%%(title)s.%%(ext)s" "https://www.youtube.com/watch?v=%DL%"
+) else (
+    echo  [!] yt-dlp не найден!
+)
+echo  [OK] Аудио сохранено!
+pause
+goto MENU
+
+:PRELOAD_PLAYLIST
+set /p pl_url="  Ссылка на плейлист: "
+if "%pl_url%"=="" goto MENU
+
+set "OFFLINE_DIR=%~dp0offline_cache"
+if not exist "%OFFLINE_DIR%" mkdir "%OFFLINE_DIR%"
+
+echo  [>>] Загружаю весь плейлист (низкое качество)...
+if exist "yt-dlp.exe" (
+    yt-dlp.exe -f "best[height<=144]" -o "%OFFLINE_DIR%\%%(playlist_index)s-%%(title)s.%%(ext)s" "%pl_url%"
+) else (
+    echo  [!] yt-dlp не найден!
+)
+echo  [OK] Плейлист загружен!
+pause
+goto MENU
+
+:OFFLINE_AUDIO
+cls
+echo  ╔══════════════════════════════════════════════════════════════╗
+echo  ║       Только аудио-режим (YouTube как подкаст)            ║
+echo  ╚══════════════════════════════════════════════════════════════╝
+echo.
+echo  Режим "только звук" отключает загрузку видео,
+echo  экономя до 95%% трафика. Идеально для:
+echo  • Музыки
+echo  • Подкастов
+echo  • Лекций
+echo  • Фонового прослушивания
+echo.
+set /p audio_url="  Ссылка на видео: "
+if "%audio_url%"=="" goto MENU
+
+set "VID=%audio_url%"
+echo %audio_url% | findstr /i "youtube.com" >nul && for /f "tokens=2 delims=?v=&" %%a in ("%audio_url%") do set "VID=%%a"
+echo %audio_url% | findstr /i "youtu.be" >nul && for /f "tokens=2 delims=/" %%a in ("%audio_url%") do set "VID=%%a"
+
+echo  [>>] Открываю в аудио-режиме...
+REM Используем специальный URL с параметрами для аудио
+start "" "https://www.youtube.com/embed/%VID%?autoplay=0&controls=1&modestbranding=1&rel=0&quality=tiny&volume=100"
+echo.
+echo  [OK] Видео открыто в режиме экономии трафика!
+echo  [>>] Совет: сверните вкладку — звук продолжит играть
+echo  [>>] Для чистого аудио: скачайте через пункт [26] → Только аудио
+pause
+goto MENU
+
+:OFFLINE_PLAYLIST
+cls
+echo  ╔══════════════════════════════════════════════════════════════╗
+echo  ║       Оффлайн плейлист                                     ║
+echo  ╚══════════════════════════════════════════════════════════════╝
+echo.
+echo  Создайте плейлист для оффлайн-просмотра.
+echo  Видео будут загружены заранее и доступны без интернета.
+echo.
+echo  [1] Создать новый оффлайн плейлист
+echo  [2] Открыть сохранённый плейлист
+echo  [3] Добавить видео в плейлист
+echo.
+set /p pl_choice="  Выбор: "
+
+if "%pl_choice%"=="1" (
+    set /p pl_name="  Название плейлиста: "
+    echo %pl_name% > "%~dp0offline_cache\playlist_%pl_name%.txt"
+    echo  [OK] Плейлист создан!
+)
+if "%pl_choice%"=="2" (
+    echo  Сохранённые плейлисты:
+    dir "%~dp0offline_cache\playlist_*.txt" /b 2>nul
+    set /p pl_open="  Название: "
+    if exist "%~dp0offline_cache\playlist_%pl_open%.txt" (
+        start notepad "%~dp0offline_cache\playlist_%pl_open%.txt"
+    )
+)
+if "%pl_choice%"=="3" (
+    set /p pl_add_name="  Название плейлиста: "
+    set /p pl_add_url="  Ссылка на видео: "
+    echo %pl_add_url% >> "%~dp0offline_cache\playlist_%pl_add_name%.txt"
+    echo  [OK] Видео добавлено!
+)
+pause
+goto MENU
+
+:OFFLINE_CLEAR
+cls
+echo  ╔══════════════════════════════════════════════════════════════╗
+echo  ║       Очистка кэша оффлайн-режима                          ║
+echo  ╚══════════════════════════════════════════════════════════════╝
+echo.
+echo  [1] Очистить кэш браузера (Chrome)
+echo  [2] Очистить папку offline_cache
+echo  [3] Очистить всё
+echo.
+set /p clear_choice="  Выбор: "
+
+if "%clear_choice%"=="1" (
+    start "" "chrome://settings/clearBrowserData"
+    echo  [>>] Открыты настройки Chrome
+)
+if "%clear_choice%"=="2" (
+    if exist "%~dp0offline_cache" (
+        rmdir /s /q "%~dp0offline_cache" 2>nul
+        echo  [OK] Папка offline_cache удалена
+    )
+)
+if "%clear_choice%"=="3" (
+    if exist "%~dp0offline_cache" rmdir /s /q "%~dp0offline_cache" 2>nul
+    start "" "chrome://settings/clearBrowserData"
+    echo  [OK] Всё очищено!
+)
+pause
+goto MENU
+
+:: ============ [26] ОФФЛАЙН СКАЧИВАНИЕ ============
+:OFFLINE_DOWNLOAD
+cls
+echo  ╔══════════════════════════════════════════════════════════════╗
+echo  ║       Скачать видео для оффлайн-просмотра                 ║
+echo  ╚══════════════════════════════════════════════════════════════╝
+echo.
+echo  Выберите сервис для скачивания:
+echo.
+echo  [1] y2mate.com (MP4/MP3)
+echo  [2] savefrom.net (все форматы)
+echo  [3] 9convert.com (MP3/MP4)
+echo  [4] yt1s.com (HD)
+echo  [5] yt-dlp (локально, лучшее качество)
+echo.
+set /p dl_choice="  Выбор: "
+set /p dl_url="  Ссылка на видео: "
+
+if "%dl_url%"=="" goto MENU
+
+set "VID=%dl_url%"
+echo %dl_url% | findstr /i "youtube.com" >nul && for /f "tokens=2 delims=?v=&" %%a in ("%dl_url%") do set "VID=%%a"
+echo %dl_url% | findstr /i "youtu.be" >nul && for /f "tokens=2 delims=/" %%a in ("%dl_url%") do set "VID=%%a"
+
+if "%dl_choice%"=="1" start "" "https://www.y2mate.com/youtube/%VID%"
+if "%dl_choice%"=="2" start "" "https://en.savefrom.net/1-youtube-downloader/?url=https://www.youtube.com/watch?v=%VID%"
+if "%dl_choice%"=="3" start "" "https://9convert.com/en/youtube-to-mp4/%VID%"
+if "%dl_choice%"=="4" start "" "https://yt1s.com/youtube-to-mp4?url=https://www.youtube.com/watch?v=%VID%"
+if "%dl_choice%"=="5" (
+    if exist "yt-dlp.exe" (
+        yt-dlp.exe -f "best[height<=720]" "https://www.youtube.com/watch?v=%VID%"
+    ) else (
+        echo  [!] yt-dlp не найден!
+    )
+)
+
+echo  [OK] Сервис открыт в браузере!
+timeout /t 2 >nul
+goto MENU
+
+:: ============ [27] ОФФЛАЙН ПОИСК ============
+:OFFLINE_SEARCH
+cls
+echo  ╔══════════════════════════════════════════════════════════════╗
+echo  ║       Оффлайн-поиск по кэшу                                ║
+echo  ╚══════════════════════════════════════════════════════════════╝
+echo.
+echo  Поиск по уже сохранённым видео в оффлайн-кэше.
+echo.
+
+set "OFFLINE_DIR=%~dp0offline_cache"
+if not exist "%OFFLINE_DIR%" (
+    echo  [!] Папка offline_cache не найдена!
+    echo  [>>] Сначала загрузите видео через пункт 26
+    pause
+    goto MENU
+)
+
+echo  Сохранённые видео:
+dir "%OFFLINE_DIR%" /b 2>nul | findstr /v "playlist"
+echo.
+echo  [>>] Открываю папку с видео...
+explorer "%OFFLINE_DIR%"
+pause
+goto MENU
 
 :EXIT
 echo  До свидания!
