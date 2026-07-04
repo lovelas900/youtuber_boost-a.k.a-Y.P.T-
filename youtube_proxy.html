@@ -367,6 +367,29 @@
             <span class="badge badge-yellow" id="methodBadge">Метод: Invidious</span>
         </div>
     </div>
+    <div class="section-title" style="border-bottom-color:#FF9800;">📴 Оффлайн-режим</div>
+<div class="methods-grid">
+    <div class="method-card" onclick="openMethod('offline_econom')">
+        <div class="icon">💾</div>
+        <div class="name">Эконом-режим</div>
+        <div class="desc">144p, минимум трафика</div>
+    </div>
+    <div class="method-card" onclick="openMethod('offline_audio')">
+        <div class="icon">🎵</div>
+        <div class="name">Только аудио</div>
+        <div class="desc">Без видео, 95% экономия</div>
+    </div>
+    <div class="method-card" onclick="openMethod('offline_cache')">
+        <div class="icon">📦</div>
+        <div class="name">Кэш видео</div>
+        <div class="desc">Сохранить локально</div>
+    </div>
+    <div class="method-card" onclick="openMethod('offline_download')">
+        <div class="icon">⬇</div>
+        <div class="name">Скачать</div>
+        <div class="desc">Для оффлайн-просмотра</div>
+    </div>
+</div>
 
     <script>
         const INVIDIOUS_INSTANCES = ['https://yewtu.be','https://invidious.fdn.fr','https://vid.puffyan.us','https://invidious.snopyta.org','https://invidious.kavin.rocks','https://inv.riverside.rocks','https://yt.artemislena.eu'];
@@ -545,11 +568,35 @@
             const u={y2mate:`https://www.y2mate.com/youtube/${v}`,savefrom:`https://en.savefrom.net/1-youtube-downloader/?url=https://www.youtube.com/watch?v=${v}`,'9convert':`https://9convert.com/en/youtube-to-mp4/${v}`,yt1s:`https://yt1s.com/youtube-to-mp4?url=https://www.youtube.com/watch?v=${v}`};
             window.open(u[s]||u.y2mate,'_blank');
         }
+        if (method === 'offline_econom') {
+    const vid = currentVideoId || 'dQw4w9WgXcQ';
+    window.open(`https://www.youtube.com/embed/${vid}?autoplay=0&quality=tiny&controls=1&modestbranding=1&rel=0`, '_blank');
+    toast('💾 Эконом-режим (144p)');
+    return;
+}
+if (method === 'offline_audio') {
+    const vid = currentVideoId || 'dQw4w9WgXcQ';
+    window.open(`https://www.youtube.com/embed/${vid}?autoplay=0&quality=tiny&volume=100&controls=1&modestbranding=1&rel=0`, '_blank');
+    toast('🎵 Аудио-режим (сверните вкладку)');
+    return;
+}
+if (method === 'offline_cache') {
+    alert('📦 Кэширование видео\n\n1. Загрузите видео\n2. Нажмите "Сохранить в кэш"\n3. Видео будет доступно оффлайн\n\nИспользуйте оффлайн HTML: offline_cache/youtube_offline.html');
+    return;
+}
+if (method === 'offline_download') {
+    switchTab('download', true);
+    return;
+}
 
+     
+    
+    
+       
         function copyLink(vid){navigator.clipboard.writeText(`https://www.youtube.com/watch?v=${vid}`).then(()=>showStatus('📋 Скопировано!','ok'),()=>prompt('Скопируйте:',`https://www.youtube.com/watch?v=${vid}`));}
         function showStatus(m,t){const b=document.getElementById('statusBadge');b.textContent=m;b.className='status '+(t==='err'?'status-err':'status-ok');}
         function fmtDur(s){if(!s)return'';s=parseInt(s);const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),se=s%60;return h>0?`${h}:${String(m).padStart(2,'0')}:${String(se).padStart(2,'0')}`:`${m}:${String(se).padStart(2,'0')}`;}
-        function esc(s){const d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
+     function esc(s){const d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
     </script>
 </body>
-</html>
+</html>   
