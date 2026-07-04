@@ -1,0 +1,25 @@
+[Unit]
+Description=YouTube Proxy Server
+Documentation=https://github.com/your-repo
+After=network.target network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=%u
+WorkingDirectory=/opt/youtube-proxy
+ExecStart=/usr/bin/python3 /opt/youtube-proxy/proxy_server.py
+Restart=on-failure
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+# Безопасность
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=%h/.cache/youtube-proxy
+
+[Install]
+WantedBy=multi-user.target
